@@ -38,7 +38,7 @@ Two steps to set up IRIS:
 ##### 1.1 Download IRIS program
 The IRIS program can be downloaded directly from the repository, as shown below:
 ```
-git clone https://github.com/iris-tool-io/IRIS.git
+git clone https://github.com/Xinglab/IRIS.git
 cd IRIS
 ```
 __For full functionality, IRIS requires use of the SGE system. For users who want to use functions involving SGE (see [Usage](#usage) for details), please check IRIS/config.py to ensure qsub parameters are correct before moving to the next step.__
