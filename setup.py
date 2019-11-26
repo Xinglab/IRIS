@@ -7,7 +7,7 @@ def main():
 	setup(
 		name='IRIS',
 		  
-		version='1.0',
+		version='1.0.0',
 		  
 		description='Isoform peptides from RNA splicing for Immunotherapy target Screening',
 
