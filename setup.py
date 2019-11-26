@@ -30,15 +30,7 @@ def main():
 		'uniprot2gtf.blastout.uniprotAll.txt',
 		'HLA_types.least.list',
 		'HLA_types.least.tsv']},
-		install_requires=[]#'keras', 
-				#'numpy',
-				#'pyyaml',
-				#'h5py',
-				#'scikit-learn',
-				#'scipy',
-				#'tqdm>=4.14',
-				#'pandas>=0.21.0',
-				#'theano']
+		install_requires=[]
 		 )
 	return
 
