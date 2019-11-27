@@ -1,2 +1,2 @@
-../IRIS/example/SJ_matrices/RL_100_rmatspost_list.txt
-../IRIS/example/SJ_matrices/RL_150_rmatspost_list.txt
+RL_100_rmatspost_list.txt
+RL_150_rmatspost_list.txt
