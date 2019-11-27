@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Run the IRIS pipeline for the inputs in example/
+
+function main() {
+  if [[ "$#" -ne 0 ]]; then
+    echo "arguments given, but none expected" >&2
+    return 1
+  fi
+
+  USERNAME="example"
+  RMATS_MATRICES_TAR="example/SJ_matrices.tar.gz"
+  RAW_SCREENING_PARAMS="example/Test_simplified.para"
+  MHC_BY_SAMPLE="example/HLA_types/hla_patient.tsv"
+  MHC_LIST="example/HLA_types/hla_types.list"
+
+  run_iris "${USERNAME}" "${RMATS_MATRICES_TAR}" "${RAW_SCREENING_PARAMS}"\
+           "${MHC_BY_SAMPLE}" "${MHC_LIST}" || return 1
+}
+
+main "$@"

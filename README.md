@@ -50,7 +50,7 @@ Download IEDB_MHC_I-X.XX.X.tar.gz from IEDB website (see [Dependencies](#depende
 #### 2. Install and configure
 Under the IRIS folder, do:
 ```
-./install.sh.bak 
+./install
 ```
 Follow instructions to finish the installation of conda, python and its dependencies, bedtools, the downloaded IEDB package, and the IRIS data and packages. 
 
@@ -123,9 +123,9 @@ usage: IRIS epitope_post [-h] -p PARAMETER_FIN -o OUTDIR -m MHC_BY_SAMPLE
 
 
 ### Example
-We provide a wrapper ([run_example.sh](run_example.sh)) to run the above [IRIS streamlined major modules](#streamlined-major-modules) using [example files](example), included in the IRIS package. For customized pipeline development, we recommend that users use this script as a reference. Under the IRIS folder, do:
+We provide a wrapper ([run_example](run_example)) to run the above [IRIS streamlined major modules](#streamlined-major-modules) using [example files](example), included in the IRIS package. For customized pipeline development, we recommend that users use this script as a reference. Under the IRIS folder, do:
 ```
-./run_example.sh
+./run_example
 ```
 __As mentioned in [Usage](#usage), this example run will involve submitting the job array to the SGE system.__ It will take < 5 min for the formatting and screening steps and usually < 15 min for the prediction step (SGE job arrays).\
 A successful test run will generate the following result files (row numbers are displayed before each file name):
@@ -143,7 +143,7 @@ A successful test run will generate the following result files (row numbers are 
      45 prioritized/epitope_summary.peptide-based.txt
      84 prioritized/pred_filtered.score500.txt
 ```
-__Users can refer to relative paths in the parameter file Test.para, the file manifest matrice.txt, and the file samples.txt. These relative paths were made for the example run. Users will need to change the path for their own analyses.__
+TODO update this to mention matrices tar, simplified params  __Users can refer to relative paths in the parameter file Test.para, the file manifest matrice.txt, and the file samples.txt. These relative paths were made for the example run. Users will need to change the path for their own analyses.__
 
 ### Example output
 Final reports are shown in __bold__ font.

@@ -1,0 +1,16 @@
+IEDB/
+IRIS_data/
+STAR/
+bedtools/
+cufflinks/
+ms_gf_plus/
+rMATS/
+samtools/
+seq2hla/
+IRIS.egg-info/
+build/
+dist/
+__pycache__/
+IRIS_pep2epitope.o*
+cmdlist.pep2epitope_*
+qsub.IRIS_pep2epitope.py.*.sh

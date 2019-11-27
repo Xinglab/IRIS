@@ -191,6 +191,7 @@ def main(args):
 		if group_plot:
 			pdf.savefig(fig)
 			pdf.close()
+			plt.savefig('{}.png'.format(fin_plot_query))
 
 
 if __name__ == '__main__':

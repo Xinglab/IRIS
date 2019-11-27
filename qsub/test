@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# run tests
+
+function main() {
+  source ../set_env_vars.sh || return 1
+  source ../conda.sh || return 1
+
+  conda::activate_env "${CONDA_ENV_NAME_3}" || return 1
+
+  if [[ "$#" -ne 0 ]]; then
+    echo "arguments given, but none expected" >&2
+    return 1
+  fi
+
+  python test_submit_qsub_and_wait.py || return 1
+
+  conda::deactivate_env || return 1
+}
+
+main "$@"
