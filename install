@@ -9,6 +9,7 @@
 # https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh
 #
 # ** Must manually download the IRIS_data set **
+# https://drive.google.com/file/d/1TaswpWPnEd4TXst46jsa9XSMzLsbzjOQ/view?usp=sharing
 #
 # ** Must manually download IEDB tools version 2.15.5 to the IEDB directory. **
 # download file to IEDB/IEDB_MHC_I-2.15.5.tar.gz
@@ -225,7 +226,6 @@ function install_python_packages() {
 }
 
 function install_iris_data() {
-  # TODO automate the download of IRIS_data
   echo
   echo "checking IRIS data dependency"
 
@@ -233,8 +233,13 @@ function install_iris_data() {
 
   if [[ ! -d IRIS_data ]]
   then
-    echo "missing IRIS_data" >&2
-    return 1
+    if [[ ! -f IRIS_data.tgz ]]; then
+      echo "Need to download IRIS_data.tgz from:"
+      echo "https://drive.google.com/file/d/1TaswpWPnEd4TXst46jsa9XSMzLsbzjOQ/view?usp=sharing"
+      return 1
+    fi
+
+    tar -xvf IRIS_data.tgz || return 1
   fi
 }
 

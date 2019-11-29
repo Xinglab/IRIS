@@ -1,5 +1,6 @@
 IEDB/
 IRIS_data/
+IRIS_data.tgz
 STAR/
 bedtools/
 cufflinks/
@@ -11,6 +12,3 @@ IRIS.egg-info/
 build/
 dist/
 __pycache__/
-IRIS_pep2epitope.o*
-cmdlist.pep2epitope_*
-qsub.IRIS_pep2epitope.py.*.sh
