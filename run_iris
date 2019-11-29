@@ -36,11 +36,15 @@ function pre_process_inputs() {
   local TEST_MODE="$(get_line_of_file 5 ${RAW_SCREENING_PARAMS})" || return 1
   local USE_RATIO="$(get_line_of_file 6 ${RAW_SCREENING_PARAMS})" || return 1
 
-  DATA_SET_NAME="${USERNAME}_${RAW_DATA_SET_NAME}"
+  # The leading underscore is used to distinguish user data sets from reference data sets
+  DATA_SET_NAME="_${USERNAME}_${RAW_DATA_SET_NAME}"
 
   RESULT_DIR="${SCRIPT_DIR}/results/${USERNAME}/${RAW_DATA_SET_NAME}"
   mkdir -p "${RESULT_DIR}" || return 1
   SCREENING_OUT_DIR="${RESULT_DIR}/screening"
+  mkdir -p "${SCREENING_OUT_DIR}" || return 1
+  RUN_DIR="${RESULT_DIR}/temp"
+  mkdir -p "${RUN_DIR}" || return 1
 
   local IRIS_DATA="${SCRIPT_DIR}/IRIS_data"
   IRIS_DB="${IRIS_DATA}/db/"
@@ -90,6 +94,8 @@ function formatting_step() {
   echo
   echo "formatting"
 
+  cd "${RUN_DIR}" || return 1
+
   local SAMPLE_NAME_FIELD='2'
   local SPLICING_EVENT_TYPE='SE'
 
@@ -100,6 +106,8 @@ function formatting_step() {
 function screening_step() {
   echo
   echo "screening"
+
+  cd "${RUN_DIR}" || return 1
 
   IRIS screening "${SCREENING_PARAMS}" -t -o "${SCREENING_OUT_DIR}" || return 1
 }
@@ -144,6 +152,8 @@ function prediction_step() {
   echo
   echo "prediction"
 
+  cd "${RUN_DIR}" || return 1
+
   local TEMP_F_NAME="$(mktemp)" || return 1
 
   local DELTA_PSI_COLUMN='5'
@@ -164,6 +174,8 @@ function epitope_post_step() {
   echo
   echo "epitope_post"
 
+  cd "${RUN_DIR}" || return 1
+
   # TODO -e is actually not required?
   IRIS epitope_post -p "${SCREENING_PARAMS}" -o "${SCREENING_OUT_DIR}"\
        -m "${MHC_BY_SAMPLE}" || return 1
@@ -173,12 +185,11 @@ function screening_plot_step() {
   echo
   echo "screening_plot"
 
+  cd "${RUN_DIR}" || return 1
+
   local IN_PREFIX="${SCREENING_OUT_DIR}/${DATA_SET_NAME}"
   local PRIMARY_IN="${IN_PREFIX}.primary.txt"
   local PRIORITIZED_IN="${IN_PREFIX}.prioritized.txt"
-
-  local ORIG_DIR="$(pwd)" || return 1
-  cd "${RESULT_DIR}" || return 1
 
   local OUT_PREFIX="${RESULT_DIR}/violin"
   local PRIMARY_OUT="${OUT_PREFIX}_primary"
@@ -189,8 +200,6 @@ function screening_plot_step() {
 
   IRIS screening_plot "${PRIMARY_OUT}" -p "${SCREENING_PARAMS}" || return 1
   IRIS screening_plot "${PRIORITIZED_OUT}" -p "${SCREENING_PARAMS}" || return 1
-
-  cd "${ORIG_DIR}" || return 1
 }
 
 function set_python3_executable() {
@@ -223,7 +232,6 @@ function main() {
   epitope_post_step || return 1
   screening_plot_step || return 1
 
-  cd "${SCRIPT_DIR}" || return 1
   conda::deactivate_env || return 1
 }
 

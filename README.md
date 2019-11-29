@@ -11,7 +11,7 @@
 - [Example](#example)
 - [Output](#example-output)
 - [Contact](#contact)
-- [Publication](#citation)
+- [Publication](#publication)
 
 
 
@@ -105,7 +105,7 @@ usage: IRIS formatting [-h] -t {SE,RI,A3,A5} -n DATA_NAME -s {1,2}
 ```
 
 - Step 2. IRIS screening (& translation) 
-Here is a [description of the parameter file](example/paramenter_file_description.txt) and an [example file](example/Test.para).
+Here is a [description of the parameter file](example/parameter_file_description.txt) and an [example file](example/Test.para).
 ```
 usage: IRIS screening [-h] [-o OUTDIR] [-t] parameter_fin
 ```
@@ -123,19 +123,19 @@ usage: IRIS epitope_post [-h] -p PARAMETER_FIN -o OUTDIR -m MHC_BY_SAMPLE
 
 
 ### Example
-We provide a wrapper ([run_example](run_example)) to run the above [IRIS streamlined major modules](#streamlined-major-modules) using [example files](example), included in the IRIS package. For customized pipeline development, we recommend that users use this script as a reference. Under the IRIS folder, do:
+We provide a wrapper ([run_example](run_example)) to run the above [IRIS streamlined major modules](#streamlined-major-modules) using [example files](example), included in the IRIS package. For customized pipeline development, we recommend that users use this script and [run_iris](run_iris) as a reference. Under the IRIS folder, do:
 ```
 ./run_example
 ```
 __As mentioned in [Usage](#usage), this example run will involve submitting the job array to the SGE system.__ It will take < 5 min for the formatting and screening steps and usually < 15 min for the prediction step (SGE job arrays).\
-A successful test run will generate the following result files (row numbers are displayed before each file name):
+A successful test run will generate the following result files in ./results/example/Glioma_test/screening (row numbers are displayed before each file name):
 ```
-      0 Glioma_test.notest.txt
-     13 Glioma_test.primary.txt
-      3 Glioma_test.primary.txt.ExtraCellularAS.txt
-     11 Glioma_test.prioritized.txt
-      3 Glioma_test.prioritized.txt.ExtraCellularAS.txt
-     13 Glioma_test.test.all.txt
+      0 _example_Glioma_test.notest.txt
+     13 _example_Glioma_test.primary.txt
+      3 _example_Glioma_test.primary.txt.ExtraCellularAS.txt
+     11 _example_Glioma_test.prioritized.txt
+      3 _example_Glioma_test.prioritized.txt.ExtraCellularAS.txt
+     13 _example_Glioma_test.test.all.txt
      13 primary/epitope_summary.junction-based.txt
      74 primary/epitope_summary.peptide-based.txt
     148 primary/pred_filtered.score500.txt 
@@ -143,7 +143,7 @@ A successful test run will generate the following result files (row numbers are 
      45 prioritized/epitope_summary.peptide-based.txt
      84 prioritized/pred_filtered.score500.txt
 ```
-TODO update this to mention matrices tar, simplified params  __Users can refer to relative paths in the parameter file Test.para, the file manifest matrice.txt, and the file samples.txt. These relative paths were made for the example run. Users will need to change the path for their own analyses.__
+__Users can refer to relative paths in the parameter file Test.para, the file manifest matrice.txt, and the file samples.txt. These relative paths were made for the example run. Users will need to change the path for their own analyses.__ The run_iris script takes as input a [simplified parameter file](example/Test_simplified.para) and a .tar.gz of the [SJ_matrices](example/SJ_matrices.tar.gz) which are preprocessed before calling the IRIS modules. The preprocessing adds absolute paths based on the input relative paths.
 
 ### Example output
 Final reports are shown in __bold__ font.
