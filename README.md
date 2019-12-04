@@ -50,9 +50,12 @@ Download IEDB_MHC_I-X.XX.X.tar.gz from IEDB website (see [Dependencies](#depende
 #### 2. Install and configure
 Under the IRIS folder, do:
 ```
-./install
+./install core
 ```
-Follow instructions to finish the installation of conda, python and its dependencies, bedtools, the downloaded IEDB package, and the IRIS data and packages. 
+Follow instructions to finish the installation of conda, python and its dependencies, bedtools, the downloaded IEDB package, and the IRIS data and packages. To install optional dependencies not needed for the most common IRIS usage:
+```
+./install all
+```
 
 ### Usage
 - For streamlined AS-derived target discovery, please follow [major modules](#streamlined-major-modules) and run the corresponding toy example.
