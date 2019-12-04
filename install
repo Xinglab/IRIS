@@ -270,12 +270,7 @@ function ensure_conda_envs() {
                                                  "${CONDA_PYTHON_VERSION_3}" || return 1
 }
 
-function install() {
-  ensure_conda_envs || return 1
-
-  install_iedb || return 1
-  install_bedtools || return 1
-
+function install_optional() {
   install_star
   if [[ "$?" -ne 0 ]]; then
     echo "Error installing optional dependency: star" >&2
@@ -300,15 +295,48 @@ function install() {
   if [[ "$?" -ne 0 ]]; then
     echo "Error installing optional dependency: ms gf" >&2
   fi
+}
+
+function install() {
+  local INSTALL_OPTIONAL="$1"
+
+  ensure_conda_envs || return 1
+
+  install_iedb || return 1
+  install_bedtools || return 1
+
+  if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
+    install_optional || return 1
+  fi
 
   install_python_packages || return 1
   install_iris_data || return 1
   install_iris_package || return 1
 }
 
+function display_usage() {
+  echo "usage:"
+  echo "  ./install {core|all}"
+  echo ""
+  echo "./install core: installs only the required dependencies for the major IRIS modules"
+  echo ""
+  echo "./install all: installs all dependencies"
+}
+
 function main() {
-  if [[ "$#" -ne 0 ]]; then
-    echo "arguments given, but none expected" >&2
+  local INSTALL_OPTIONAL
+
+  if [[ "$#" -ne 1 ]]; then
+    echo "exactly one argument required" >&2
+    display_usage
+    return 1
+  elif [[ "$1" = 'core' ]]; then
+    INSTALL_OPTIONAL=0
+  elif [[ "$1" = 'all' ]]; then
+    INSTALL_OPTIONAL=1
+  else
+    echo "unrecognized argument: $1" >&2
+    display_usage
     return 1
   fi
 
@@ -317,7 +345,7 @@ function main() {
 
   SCRIPT_DIR="$(pwd)" || return 1
 
-  install || return 1
+  install "${INSTALL_OPTIONAL}" || return 1
 }
 
 main "$@"
