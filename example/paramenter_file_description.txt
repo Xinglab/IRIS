@@ -14,17 +14,19 @@ IRIS_data/resources/reference/ucsc.hg19.fasta
 ------------------------------------------------------------------------------------------------------------------------
 Row1: Input group's name in the IRIS db (see 'formatting' step)
 Row2: Directory of IRIS db
-Row3: Parameters for tissue-matched normal panels and tumor-associated events screening. They are (separated by ' '):
-filter1 p-value_cutoff deltaPSI_cutoff FC_cutoff filter1_group_cutoff filter1_reference_list
-		# filter1: A row name
-		# p-value_cutoff: the cutoff of p-value for statistical tests being used
-		# deltaPSI_cutoff: the difference of PSI values between input sample	and normal control should be larger than this threshold, which ensures the effect size of splicing change
-		# FC_cutoff: the Fold Change cutoff of PSI value of input sample compared to normal control
-		# filter1_group_cutoff: the minimum number of tumor/tissue reference panels satisfying above requirements
-		# filter1_reference_list: a list of selected reference panels, separated by ','
+Row3: Parameters for 'Tissue-matched normal panel'; screening tumor-associated events. 
+Fields are separated by ' ':
+filter_name p-value_cutoff deltaPSI_cutoff FC_cutoff filter1_group_cutoff filter1_reference_list
+		# filter_name: Row name (No space; Required)
+		# p-value_cutoff: Cutoff of p-value for statistical tests being used (Optional)
+		# deltaPSI_cutoff: Difference of PSI values between input sample and normal control should be larger than this threshold, which ensures the effect size of splicing change (Optional)
+		# FC_cutoff: Fold Change cutoff of PSI value of input sample compared to normal control (Optional)
+		# filter1_group_cutoff: Minimum number of tumor/tissue reference panels satisfying above requirements (Optional)
+		# filter1_reference_list: A list of selected reference panels (separated by ',';Optional)
 		
-Row4: Parameters for tumor panels and tumor-recurrent events screening (See row3)
-Row5: Parameters for other normal tissue panels and tumor-specific events screening (See row3)
+Row4: Parameters for 'Tumor panel'; screening for tumor-recurrent events (See Row3)
+Row5: Parameters for other 'Normal panel'; screening tumor-specific events (See Row3)
+Row3-5: As described in Row3, all fields are optional (except Row name). At least one row has to have values to perform screening. Note that 'Tumor panel' along will not function if 'Tissue-matched normal panel' is missing.
 Row6: Comparison mode, 'group' mode (number of input samples >=2) and 'individual mode' (number of input sample =1) are provided
 Row7: Use ratio or not for group_cutoff (described in Row3)
 Row8: Blacklist file, which can remove the AS events that are error-prone due to mappability or sequencing limitations (See methods for detail)
