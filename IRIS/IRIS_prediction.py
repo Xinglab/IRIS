@@ -1,5 +1,6 @@
 import sys, argparse, os ,datetime,logging, uuid, glob
 from . import config
+import numpy as np
 
 ID = str(uuid.uuid4()).split('-')[0]
 
@@ -18,16 +19,40 @@ def loadFeatures(fin):
 
 	return extracelllularDict
 
-def selectJC(AS_coord,deltaPSI_c2n,cut_off, select_all):
-	if select_all:
-		return [(AS_coord[2], AS_coord[3]),(AS_coord[2],AS_coord[0]),(AS_coord[1],AS_coord[3])]
-	if float(deltaPSI_c2n)<cut_off:# tumor skipping
-		return [(AS_coord[2], AS_coord[3])]
-	else:
-		return [(AS_coord[2],AS_coord[0]),(AS_coord[1],AS_coord[3])]
+def selectJunction(AS_coord, deltaPSI_c2n, cut_off, if_select_all, splicing_event_type): 
+	if splicing_event_type == 'SE':
+		skp = (AS_coord[2], AS_coord[3],'skp')
+		inc1 = (AS_coord[2],AS_coord[0],'inc1')
+		inc2 = (AS_coord[1],AS_coord[3],'inc2')
+	elif splicing_event_type == 'A3SS':
+		skp = (AS_coord[5], AS_coord[2],'skp')
+		inc1 = (AS_coord[5],AS_coord[0],'inc1')
+		inc2 = (AS_coord[2],AS_coord[2],'inc2')
+	elif splicing_event_type == 'A5SS':
+		skp = (AS_coord[3], AS_coord[4],'skp')
+		inc1 = (AS_coord[3],AS_coord[3],'inc1')
+		inc2 = (AS_coord[1],AS_coord[4],'inc2')
+	elif splicing_event_type == 'RI':
+		skp = (AS_coord[3], AS_coord[4],'skp')
+		inc1 = (AS_coord[3],AS_coord[3],'inc1')
+		inc2 = (AS_coord[4],AS_coord[4],'inc2')
 
-def AS2FT(AS_chrom, AS_coord,AS_direction, deltaPSI_c2n, cuf_off, select_all, extracelllularDict, id_line, fout_dict):
-	JC_coord_list=selectJC(AS_coord,deltaPSI_c2n,cuf_off, select_all)
+	if if_select_all:
+		return [skp, inc1, inc2]
+	if float(deltaPSI_c2n) < cut_off:  # tumor skipping
+		return [skp]
+	else:
+		return [inc1, inc2]
+# def selectJC(AS_coord,deltaPSI_c2n,cut_off, select_all):
+# 	if select_all:
+# 		return [(AS_coord[2], AS_coord[3]),(AS_coord[2],AS_coord[0]),(AS_coord[1],AS_coord[3])]
+# 	if float(deltaPSI_c2n)<cut_off:# tumor skipping
+# 		return [(AS_coord[2], AS_coord[3])]
+# 	else:
+# 		return [(AS_coord[2],AS_coord[0]),(AS_coord[1],AS_coord[3])]
+
+def AS2FT(AS_chrom, AS_coord,AS_direction, deltaPSI_c2n, cuf_off, select_all, extracelllularDict, id_line, fout_dict, splicing_event_type):
+	JC_coord_list=selectJunction(AS_coord,deltaPSI_c2n,cuf_off, select_all, splicing_event_type)
 	for JC_coord in JC_coord_list:
 		if JC_coord[0] in extracelllularDict:
 			for exon_info in extracelllularDict[JC_coord[0]]:
@@ -40,7 +65,7 @@ def AS2FT(AS_chrom, AS_coord,AS_direction, deltaPSI_c2n, cuf_off, select_all, ex
 				prot_name,feature,isopep_pos,feat_pos,left,right=exon_info[1]
 				if feature.startswith('TOPO_DOM:Extracellular'):
 					fout_dict['\t'.join([id_line,AS_chrom, JC_coord[1], prot_name,isopep_pos,feat_pos,left, right])]=''
-
+	return JC_coord_list
 def loadScreening(screening_result):
 	screening_result_dict={}
 	for n,l in enumerate(open(screening_result)):
@@ -53,7 +78,45 @@ def loadScreening(screening_result):
 		screening_result_dict[reformat_name]=ls[1:]
 	return screening_result_dict
 
-def extracellularAnnotation(screening_result_fin, outdir, extracelllularDict, deltaPSI_cut_off, select_all):
+def retriveJunctionPeptide(k, screening_result_fin, splicing_event_type, pep_dir_prefix):
+	IRIS_screening_result='/'.join(screening_result_fin.split('/')[:-1])
+	screening_tier=screening_result_fin.split('/')[-1].split('.')[-2]
+
+	peptide_file_name=k.replace(':','_').replace('_chr','.chr')+'.prot.fa'
+	peptide_file_name_full_skp=IRIS_screening_result.rstrip('/')+'/'+splicing_event_type+'.'+screening_tier+'/tmp/'+pep_dir_prefix+'.compared/skp/skp.'+peptide_file_name
+	peptide_file_name_full_inc=IRIS_screening_result.rstrip('/')+'/'+splicing_event_type+'.'+screening_tier+'/tmp/'+pep_dir_prefix+'.compared/inc/inc.'+peptide_file_name
+	junction_peptide=[]
+	if os.path.exists(peptide_file_name_full_skp):
+		for l in open(peptide_file_name_full_skp):
+			if l.startswith('>'):
+				continue
+			junction_peptide.append(l.strip())
+	if os.path.exists(peptide_file_name_full_inc):
+		for l in open(peptide_file_name_full_inc):
+			if l.startswith('>'):
+				continue
+			junction_peptide.append(l.strip())		
+	junction_peptide=';'.join(junction_peptide)
+	junction_peptide='-' if junction_peptide=='' else junction_peptide
+	return junction_peptide
+
+def loadGeneExp(gene_exp_matrix_fin):
+	Exp={}
+	i=0
+	for l in open(gene_exp_matrix_fin):
+		if i==0:
+			i+=1
+			continue
+		ls=l.strip().split('\t')
+		name=ls[0].split('_')[0].split('.')[0]
+		exp_list=map(float, ls[1:])
+		Q1=round(np.nanpercentile(exp_list,25),2)
+		Q3=round(np.nanpercentile(exp_list,75),2)
+		mean=round(np.nanmean(exp_list),2)
+		Exp[name]=map(str,[mean, Q1, Q3])
+	return Exp,['meanGeneExp','Q1GeneExp','Q3GeneExp']
+
+def extracellularAnnotation(screening_result_fin, splicing_event_type, extracelllularDict, deltaPSI_cut_off, select_all, gene_exp_path, pep_dir_prefix):
 	if select_all:
 		deltaPSI_column=0
 	if select_all==False:
@@ -71,7 +134,7 @@ def extracellularAnnotation(screening_result_fin, outdir, extracelllularDict, de
 			continue
 		ls=l.strip().split('\t')
 		des=ls[0].split(':')
-		JC_pep_fasta=AS2FT(des[2],des[4:8],des[3],ls[deltaPSI_column],deltaPSI_cut_off,select_all,extracelllularDict,ls[0], fout_dict)
+		JC_coord_list=AS2FT(des[2],des[4:],des[3],ls[deltaPSI_column],deltaPSI_cut_off,select_all,extracelllularDict,ls[0], fout_dict, splicing_event_type)
 	for k in fout_dict.keys():
 		fout.write(k+'\n')
 	fout.close()
@@ -84,8 +147,15 @@ def extracellularAnnotation(screening_result_fin, outdir, extracelllularDict, de
 		if ls[3]+':'+ls[5] not in extracellular_AS[ls[0]]:
 			extracellular_AS[ls[0]][ls[3]+':'+ls[5]]=[]
 		extracellular_AS[ls[0]][ls[3]+':'+ls[5]].append(ls[1]+':'+ls[2]+':'+ls[4])
+	
+	if gene_exp_path:
+		gene_exp_dict, gene_exp_header=loadGeneExp(gene_exp_path)
+
 	fout2=open(screening_result_fin+'.ExtraCellularAS.txt','w')
-	fout2.write('{}\t{}\t{}\t{}\n'.format('as_event','protein_domain_loc','protein_domain_loc_by_as_exon','\t'.join(screening_result_dict['header'])))
+	if gene_exp_path:
+		fout2.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format('as_event','protein_domain_loc','protein_domain_loc_by_as_exon','\t'.join(screening_result_dict['header']),'\t'.join(gene_exp_header), 'junction_peptide'))
+	else:
+		fout2.write('{}\t{}\t{}\t{}\t{}\n'.format('as_event','protein_domain_loc','protein_domain_loc_by_as_exon','\t'.join(screening_result_dict['header']),'junction_peptide'))
 	for k in sorted(extracellular_AS):
 		line=''
 		line=';'.join(extracellular_AS[k].keys())+'\t'
@@ -97,15 +167,20 @@ def extracellularAnnotation(screening_result_fin, outdir, extracelllularDict, de
 			line+=anno_line+';'
 		screen_print='NA'
 		if k in screening_result_dict:
+			junction_peptide=retriveJunctionPeptide(k, screening_result_fin, splicing_event_type, pep_dir_prefix)
 			screen_print='\t'.join(screening_result_dict[k])
-		fout2.write(k+'\t'+line.rstrip(';')+'\t'+screen_print+'\n')
+		optional_annotations=''
+		if gene_exp_path:
+			gene_exp_list=gene_exp_dict[k.split(':')[0]]
+			optional_annotations='\t'.join(gene_exp_list)
+		fout2.write('\t'.join([k,line.rstrip(';'), screen_print, optional_annotations, junction_peptide])+'\n')
 	fout2.close()
 	os.system('rm '+screening_result_fin+'.CellSurfAnno.tmp')
 
 
-def epitopePredictionPrep(outdir, hla_list_fin, analysis_name, iedb_path):
-	fin_list=glob.glob(outdir+'/tmp/prot.compared/skp/*.fa')
-	fin_list=fin_list+glob.glob(outdir+'/tmp/prot.compared/inc/*.fa')
+def epitopePredictionPrep(outdir, hla_list_fin, analysis_name, iedb_path, epitope_len_list, task_dir, pep_dir_prefix):
+	fin_list=glob.glob(outdir+'/tmp/'+pep_dir_prefix+'.compared/skp/*.fa')
+	fin_list=fin_list+glob.glob(outdir+'/tmp/'+pep_dir_prefix+'.compared/inc/*.fa')
 	hla_list=[]
 	num=90
 	for l in open(hla_list_fin):
@@ -114,67 +189,76 @@ def epitopePredictionPrep(outdir, hla_list_fin, analysis_name, iedb_path):
 	print "[INFO] Total HLA types loaded:", len(hla_list), ". Total peptide splice junctions loaded:",len(fin_list)
 
 	analysis_name=outdir.split('/')[-1]
-	list_name='cmdlist.pep2epitope_'+analysis_name
-	fout_list=open(list_name,'w')
 
-	m=0
+	script_count = 0
+	def write_task_script(script_contents):
+		task_script_base = 'pep2epitope_{}.{}.sh'.format(analysis_name, script_count)
+		task_script = os.path.join(task_dir, task_script_base)
+
+		with open(task_script, 'w') as f_h:
+			f_h.write('#!/bin/bash\n')
+			f_h.write(script_contents)
+
 	for i in xrange(0,len(hla_list),3):
 		hla_types=','.join(hla_list[i:i+3])
 		n=0
-		line=''
+		script_contents = ''
 		for fin in fin_list:
 			if os.stat(fin).st_size != 0:
 				n+=1
-				#line+='echo run '+fin+'\npython '+IRIS_PACKAGE_PATH+'/IRIS/IRIS.pep2epitope.py '+fin+' --hla-allele-list '+hla_types+' -o '+outdir+'\n'
-				line+='echo run '+fin+'\nIRIS pep2epitope '+fin+' --hla-allele-list '+hla_types+' -o '+outdir+' --iedb-local '+iedb_path+'\n'
-				line+='sleep 70\n'
+				script_contents += 'echo run '+fin+'\nIRIS pep2epitope '+fin+' --hla-allele-list '+hla_types+' -o '+outdir+' --iedb-local '+iedb_path+' -e '+epitope_len_list+'\n'
 				if n%num==0:
-					submission_file_name=outdir+'/tmp/submit.IRIS_pep2epitope.py.'+str(n)+'.'+hla_types+'.sh'
-					fout_list.write(submission_file_name+'\n')
-					m+=1
-					fout=open(submission_file_name,'w')
-					fout.write(line)
-					fout.close()
-					line=''
+					write_task_script(script_contents)
+					script_count += 1
+					script_contents = ''
 		if n%num!=0:
-			# print line
-			submission_file_name=outdir+'/tmp/submit.IRIS_pep2epitope.py.'+str(n)+'.'+hla_types+'.sh'
-			fout_list.write(submission_file_name+'\n')
-			m+=1
-			fout=open(submission_file_name,'w')
-			fout=open(outdir+'/tmp/submit.IRIS_pep2epitope.py.'+str(n)+'.'+hla_types+'.sh','w')
-			fout.write(line)
-			fout.close()
-			line=''
+			write_task_script(script_contents)
+			script_count += 1
+			script_contents = ''
 
-	fout_list.close()
-	fout_qsub=open('qsub.IRIS_pep2epitope.py.'+analysis_name+'.sh','w')
-
-	cmd='qsub -t 1-'+str(m)+':1 qsub.IRIS_pep2epitope.py.'+analysis_name+'.sh'
-
-	fout_qsub.write('#!/bin/bash\n#$ -N IRIS_pep2epitope\n#$ -S /bin/bash\n#$ -R y\n#$ -l '+config.QSUB_PREDICTION_CONFIG+'\n#$ -V\n#$ -cwd\n#$ -j y\n#$ -m bea\n')
-	fout_qsub.write('export s=`sed -n ${SGE_TASK_ID}p '+list_name+'`\necho $s\nbash $s')
-	fout_qsub.close()
-	print cmd
 
 def main(args):
 	#Define parameters
-	IRIS_screening_result=args.IRIS_screening_result_path
+	IRIS_screening_result=args.IRIS_screening_result_path.rstrip('/') #Modified 2021
 	deltaPSI_cut_off=float(args.deltaPSI_cut_off)
+	splicing_event_type=args.splicing_event_type
 	select_all= True if args.extracellular_anno_by_junction==False else False
 	analysis_name=[l.strip() for l in open(args.parameter_fin)][0]
-	hla_list_fin=args.mhc_list
-	iedb_path=args.iedb_local
-	extracelllularDict=loadFeatures(config.EXTRACELLULAR_FEATURES_UNIPROT2GTF_MAP_PATH) #IRIS_package_dir.rstrip('/')+'/IRIS/data/features.uniprot2gtf.ExtraCell.txt'
-	print "[INFO] Total extracellular annotated loaded:",len(extracelllularDict)
+	analysis_name=analysis_name+'.'+splicing_event_type #group_name.type
+	prioritized_only=args.tier3_only
+	extracellular_only=args.extracellular_only
+	gene_exp_matrix=args.gene_exp_matrix
+	task_dir=args.task_dir
+	all_orf=args.all_orf
+	pep_dir_prefix='prot'
+	if all_orf:
+		pep_dir_prefix='prot_allorf'
+	if not os.path.exists(task_dir):
+		os.makedirs(task_dir)
 
-	extracellularAnnotation(IRIS_screening_result+'/'+analysis_name+'.primary.txt', IRIS_screening_result, extracelllularDict, deltaPSI_cut_off, select_all)
-	epitopePredictionPrep(IRIS_screening_result+'/primary',hla_list_fin, analysis_name, iedb_path)
-
+	if extracellular_only==False:
+		hla_list_fin=args.mhc_list
+		iedb_path=args.iedb_local
+		epitope_len_list=args.epitope_len_list.rstrip(',')
 	
-	extracellularAnnotation(IRIS_screening_result+'/'+analysis_name+'.prioritized.txt', IRIS_screening_result, extracelllularDict, deltaPSI_cut_off, select_all)
-	epitopePredictionPrep(IRIS_screening_result+'/prioritized',hla_list_fin, analysis_name, iedb_path)
 
+	extracelllularDict=loadFeatures(config.EXTRACELLULAR_FEATURES_UNIPROT2GTF_MAP_PATH) 
+	print "[INFO] Total extracellular annotation loaded:",len(extracelllularDict)
+
+        if config.file_len(IRIS_screening_result+'/'+analysis_name+'.tier1.txt')==1 and prioritized_only==False:
+            prioritized_only=True
+            print "[INFO] No tier1 comparisons (tissue-matched normal) found. Use tier2&tier3 only mode. "
+	if prioritized_only:
+		extracellularAnnotation(IRIS_screening_result+'/'+analysis_name+'.tier2tier3.txt', splicing_event_type, extracelllularDict, deltaPSI_cut_off, select_all, gene_exp_matrix, pep_dir_prefix)
+		if extracellular_only==False:
+			epitopePredictionPrep(IRIS_screening_result+'/'+splicing_event_type+'.tier2tier3',hla_list_fin, analysis_name, iedb_path, epitope_len_list, task_dir, pep_dir_prefix)
+	else:
+		extracellularAnnotation(IRIS_screening_result+'/'+analysis_name+'.tier1.txt', splicing_event_type, extracelllularDict, deltaPSI_cut_off, select_all, gene_exp_matrix, pep_dir_prefix)
+		extracellularAnnotation(IRIS_screening_result+'/'+analysis_name+'.tier2tier3.txt', splicing_event_type, extracelllularDict, deltaPSI_cut_off, select_all, gene_exp_matrix, pep_dir_prefix)
+		if extracellular_only==False:
+			epitopePredictionPrep(IRIS_screening_result+'/'+splicing_event_type+'.tier1',hla_list_fin, analysis_name, iedb_path, epitope_len_list, task_dir, pep_dir_prefix)
+			#epitopePredictionPrep(IRIS_screening_result+'/'+splicing_event_type+'.prioritized',hla_list_fin, analysis_name, iedb_path, epitope_len_list, task_dir) #Only primary is needed as priortized can be parsed from it
+	
 if __name__ == '__main__':
 	main()
 

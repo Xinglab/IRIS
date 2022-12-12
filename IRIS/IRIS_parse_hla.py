@@ -5,15 +5,14 @@ from . import config
 
 def main(args):
 	outdir=args.outdir.rstrip('/')
-	fin_list=glob.glob(outdir+'/*/hla_types/hla_types-ClassI.HLAgenotype4digits')
+	fin_list=glob.glob(outdir+'/*/*-ClassI.HLAgenotype4digits')
 	HLA2patients={}
 	HLA_list=set()
 	for fin in fin_list:
-		name=fin.split('/')[-3]
-		print name
+		name=fin.split('/')[-2]
 		n=0
 		if name in HLA2patients:
-			print 'dup'
+			print 'Duplicated name '+name+'. Exit!'
 			exit()
 		HLA2patients[name]=[]
 		for l in open(fin):
@@ -21,12 +20,15 @@ def main(args):
 				n+=1
 				continue
 			ls=l.strip().split('\t')
-			if float(ls[2])<=0.05:
-				HLA2patients[name].append('HLA-'+ls[1].rstrip("'"))
-				HLA_list.add('HLA-'+ls[1].rstrip("'"))
-			if float(ls[4])<=0.05:
-				HLA2patients[name].append('HLA-'+ls[3].rstrip("'"))
-				HLA_list.add('HLA-'+ls[3].rstrip("'"))
+			if ls[2]!='NA':
+				if float(ls[2])<=0.05:
+					HLA2patients[name].append('HLA-'+ls[1].rstrip("'"))
+					HLA_list.add('HLA-'+ls[1].rstrip("'"))
+			if ls[4]!='NA':
+				if float(ls[4])<=0.05:
+					HLA2patients[name].append('HLA-'+ls[3].rstrip("'"))
+					HLA_list.add('HLA-'+ls[3].rstrip("'"))
+
 	fout1=open(outdir+'/hla_patient.tsv','w')
 	for k in HLA2patients:
 		fout1.write('\t'.join([k]+HLA2patients[k])+'\n')
@@ -38,13 +40,12 @@ def main(args):
 		fout2.write(h+'\n')
 	fout2.close()
 
-	fin_list2=glob.glob(outdir+'/*/hla_types/hla_types-ClassI.expression')
+	fin_list2=glob.glob(outdir+'/*/*-ClassI.expression')
 	HLAexp2patients={}
 	for fin2 in fin_list2:
-		name=fin2.split('/')[-3]
-		print name
+		name=fin2.split('/')[-2]
 		if name in HLAexp2patients:
-			print 'dup'
+			print 'Duplicated name '+name+'. Exit!'
 			exit()
 		HLAexp2patients[name]=[]
 		for l in open(fin2):

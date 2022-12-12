@@ -1,34 +1,45 @@
 ------------------------------------------------------------------------------------------------------------------------
-Parameter file format (take the test file for example):
+Screening parameter file format (take a screening task for 'Glioma_test' as an example):
 ------------------------------------------------------------------------------------------------------------------------
 Glioma_test
 IRIS_data/db/
-filter1 0.01 0.05 1 1 GTEx_Brain
-filter2 0.000001593371574 0.05 1 1 TCGA_GBM,TCGA_LGG
-filter3 0.01 0.05 1 2 GTEx_Heart,GTEx_Skin,GTEx_Blood,GTEx_Lung,GTEx_Liver,GTEx_Nerve,GTEx_Muscle,GTEx_Spleen,GTEx_Thyroid,GTEx_Kidney,GTEx_Stomach
-group
+0.01,0.05,1,0.000001,1 GTEx_Brain
+0.000001,0.05,1,0.000001,1 TCGA_GBM,TCGA_LGG
+0.01,0.05,1,0.000001,5 GTEx_Heart,GTEx_Skin,GTEx_Blood,GTEx_Lung,GTEx_Liver,GTEx_Nerve,GTEx_Muscle,GTEx_Spleen,GTEx_Thyroid,GTEx_Kidney,GTEx_Stomach
+group parametric
 False
 
 IRIS_data/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig
 IRIS_data/resources/reference/ucsc.hg19.fasta
 ------------------------------------------------------------------------------------------------------------------------
-Row1: Input group's name in the IRIS db (see 'formatting' step)
-Row2: Directory of IRIS db
-Row3: Parameters for 'Tissue-matched normal panel'; screening tumor-associated events. 
-Fields are separated by ' ':
-filter_name p-value_cutoff deltaPSI_cutoff FC_cutoff filter1_group_cutoff filter1_reference_list
-		# filter_name: Row name (No space; Required)
-		# p-value_cutoff: Cutoff of p-value for statistical tests being used (Optional)
-		# deltaPSI_cutoff: Difference of PSI values between input sample and normal control should be larger than this threshold, which ensures the effect size of splicing change (Optional)
-		# FC_cutoff: Fold Change cutoff of PSI value of input sample compared to normal control (Optional)
-		# filter1_group_cutoff: Minimum number of tumor/tissue reference panels satisfying above requirements (Optional)
-		# filter1_reference_list: A list of selected reference panels (separated by ',';Optional)
+Row1 (required): Input group name. This should be identical to the folder name in the IRIS db (see 'format' step)
+
+Row2 (required): Path to the directory of IRIS db
+
+Row3 (see below): Parameters for the tier 1 screening (i.e. 'tissue-matched normal reference')
+Fields are separated by ' ': fitler1_cutoffs and filter1_reference_list
+within each field, parameters are separated by ',':
+- tier1_cutoffs: PSI_p-value_cutoff,deltaPSI_cutoff,FC_cutoff,SJC_p-value_cutoff,filter1_group_cutoff
+		# PSI_p-value_cutoff: Cutoff of p-value for statistical tests in PSI-based tests.
+		# deltaPSI_cutoff: Minimum difference of PSI values (i.e deltaPSI) between tumor and normal groups
+		# FC_cutoff: Fold Change cutoff of PSI value of input sample compared to normal control
+		# SJC_p-value_cutoff: Cutoff of p-value for statistical tests in SJC-based tests.
+		# tier1_group_cutoff: Minimum number of tumor/tissue reference groups satisfying above requirements. This number should be no larger than the number of reference normal groups selected in the next field ('tier1_reference list')
+- tier1_reference_list: A list of selected reference panels (separated by ','). Names should be identical to the folder name in the IRIS db (see 'format' step)
 		
-Row4: Parameters for 'Tumor panel'; screening for tumor-recurrent events (See Row3)
-Row5: Parameters for other 'Normal panel'; screening tumor-specific events (See Row3)
-Row3-5: As described in Row3, all fields are optional (except Row name). At least one row has to have values to perform screening. Note that 'Tumor panel' along will not function if 'Tissue-matched normal panel' is missing.
-Row6: Comparison mode, 'group' mode (number of input samples >=2) and 'individual mode' (number of input sample =1) are provided
-Row7: Use ratio or not for group_cutoff (described in Row3)
-Row8: Blacklist file, which can remove the AS events that are error-prone due to mappability or sequencing limitations (See methods for detail)
-Row9: Mappability file, which can be used to evaluate the AS events
+Row4 (see below): Parameters for the tier 2 screening (i.e. 'tumor reference'). Same format as the row3
+
+Row5 (see below): Parameters for the tier 3 screening (i.e. 'normal tissue reference'). Same format as the row3
+
+Row3-5 (at least one NORMAL reference row is required) For example, tier 1 alone, or tier 3 alone, or tier 1 + tier 2 + tier 3 are valid settings for screening. Note that tier 2 alone will not function if tier 1 is missing (tumor recurrence is estabilshed by comparing to a user-specified tissue-matched normal reference in tier 1)
+
+Row6 (required for PSI-based tests): Comparison mode & statistical test type: 'group' mode (number of input samples >=2) and 'individual mode' (number of input sample =1) are provided. 'group' mode is default and recommended; for PSI-based tests, 'parametric' and 'nonparametric' tests are supported. 'parametric' is default
+
+Row7 (required for PSI-based tests): Use ratio instead of number of groups for the tierX_group_cutoff. Default is False 
+
+Row8 (optional): Blacklist file. Removes the AS events that are error-prone due to artifacts. Optional
+
+Row9 (optional): Mappability annotation bigWig file. Required for evaluating splice region mappability.
+
+Row10 (optional): Reference genome file. Required for IRIS translate.
 ------------------------------------------------------------------------------------------------------------------------

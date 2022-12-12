@@ -7,7 +7,7 @@ def main():
 	setup(
 		name='IRIS',
 		  
-		version='1.0.0',
+		version='2.0.0',
 		  
 		description='Isoform peptides from RNA splicing for Immunotherapy target Screening',
 
@@ -24,7 +24,7 @@ def main():
 		include_package_data=True,
 
 		package_data={'IRIS.data':[
-		'brain_blacklistMay.txt',
+		'blacklist.brain_2020.txt',
 		'features.uniprot2gtf.ExtraCell.txt',
 		'UniprotENSGmap.txt',
 		'uniprot2gtf.blastout.uniprotAll.txt',

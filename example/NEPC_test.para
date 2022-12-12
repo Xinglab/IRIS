@@ -1,0 +1,10 @@
+NEPC_test
+IRIS_data.v2.0.0/db/
+
+
+0.01,0.05,1,0.000001,8 GTEx_Heart,GTEx_Blood,GTEx_Lung,GTEx_Liver,GTEx_Brain,GTEx_Nerve,GTEx_Muscle,GTEx_Spleen,GTEx_Thyroid,GTEx_Skin,GTEx_Kidney
+group parametric
+False
+
+IRIS_data.v2.0.0/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig
+IRIS_data.v2.0.0/resources/reference/ucsc.hg19.fasta

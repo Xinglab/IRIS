@@ -1,94 +1,201 @@
 # IRIS: Isoform peptides from RNA splicing for Immunotherapy target Screening
 
 
+## Quick guide
 
-### Quick guide
-- [Dependencies](#dependencies)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Usage - individual modules (for customized pipelines)](#individual-modules)
-  - [Usage - streamlined major modules (for common use)](#streamlined-major-modules)
-- [Example](#example)
-- [Output](#example-output)
-- [Contact](#contact)
-- [Publication](#publication)
+* [Dependencies](#dependencies)
+* [Installation](#installation)
+* [Usage](#usage)
+  + [Usage - individual functions (for customized pipelines)](#individual-functions)
+  + [Usage - streamlined major functions (for common use)](#streamlined-major-functions)
+  + [Snakemake](#snakemake)
+* [Example](#example)
+* [Output](#example-output)
+* [Contact](#contact)
+* [Publication](#publication)
 
+## Dependencies
 
+### Core dependencies (required for major IRIS functions/steps - format, screen, and predict)
 
-### Dependencies
+* python 2.7.x (numpy, scipy, seaborn, pyBigWig, statsmodels, pysam)
+* [IEDB stand-alone 20130222 2.15.5](http://tools.iedb.org/main/download/)
+  + IEDB additionally depends on:
+    - [tcsh](http://www.tcsh.org)
+    - [gawk](http://www.gnu.org/software/gawk/)
+* [bedtools 2.29.0](https://bedtools.readthedocs.io/en/latest/)
 
-#### Core dependencies (required for major IRIS modules/steps - formatting, screening, and prediction):
-- python 2.7.x (numpy, scipy, seaborn, pyBigWig, etc.)
-- [IEDB stand-alone 20130222 2.15.5 (2.22.1 is not fully tested)](http://tools.iedb.org/main/download/)
-- [bedtools 2.29.0](https://bedtools.readthedocs.io/en/latest/)
+### Other dependencies (required for processing raw RNA-Seq and MS data)
 
-#### Other dependencies (required for processing raw RNA-Seq and MS data)
-- [STAR 2.5.3](https://github.com/alexdobin/STAR/releases/tag/2.5.3a): required for IRIS RNA-seq processing
-- [samtools 1.3](https://sourceforge.net/projects/samtools/files/samtools/): required for IRIS RNA-seq processing
-- [rMATS-turbo](http://rnaseq-mats.sourceforge.net): required for IRIS RNA-seq processing
-- [Cufflinks 2.2.1](http://cole-trapnell-lab.github.io/cufflinks/install/): required for IRIS RNA-seq processing
-- [seq2HLA](https://bitbucket.org/sebastian_boegel/seq2hla/src/default/): required for HLA typing; requires [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
-- [MS GF+ (v2018.07.17)](https://github.com/MSGFPlus/msgfplus): required for MS search; requiring [Java](https://www.java.com/en/download/)
+* [STAR 2.5.3](https://github.com/alexdobin/STAR/releases/tag/2.5.3a): required for IRIS RNA-seq processing
+* [samtools 1.3](https://sourceforge.net/projects/samtools/files/samtools/): required for IRIS RNA-seq processing
+* [rMATS-turbo](https://github.com/Xinglab/rmats-turbo): required for IRIS RNA-seq processing
+* [Cufflinks 2.2.1](http://cole-trapnell-lab.github.io/cufflinks/install/): required for IRIS RNA-seq processing
+* [seq2HLA](https://bitbucket.org/sebastian_boegel/seq2hla/src/default/): required for HLA typing; requires [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
+* [MS GF+ (v2018.07.17)](https://github.com/MSGFPlus/msgfplus): required for MS search; requiring [Java](https://www.java.com/en/download/)
+* [R](https://www.r-project.org/): used by seq2HLA
 
+## Installation
 
+### 1. Download
 
-### Installation
-Two steps to set up IRIS:
-#### 1. Download
-##### 1.1 Download IRIS program
+#### 1.1 Download IRIS program
+
 The IRIS program can be downloaded directly from the repository, as shown below:
 ```
 git clone https://github.com/Xinglab/IRIS.git
 cd IRIS
 ```
-__For full functionality, IRIS requires use of the SGE system. For users who want to use functions involving SGE (see [Usage](#usage) for details), please check IRIS/config.py to ensure qsub parameters are correct before moving to the next step.__
-##### 1.2 Download IRIS db 
-IRIS loads a big-data reference database of splicing events and other genomic annotations. \
-These data are included in [IRIS_data.tgz](https://drive.google.com/file/d/1TaswpWPnEd4TXst46jsa9XSMzLsbzjOQ/view?usp=sharing) (a Google Drive link; size ~10 GB). Users need to move this file to the IRIS folder for streamlined installation. 
-##### 1.3 Download IEDB MHC I prediction tools
-Download IEDB_MHC_I-X.XX.X.tar.gz from IEDB website (see [Dependencies](#dependencies)). Create a folder named 'IEDB' in the IRIS folder, then move the downloaded gz file to the 'IEDB' folder.
-#### 2. Install and configure
-Under the IRIS folder, do:
+__IRIS is designed to make use of a computing cluster to improve performance. For users who want to enable cluster execution for functions that support it (see [Configure](#3-configure-for-compute-cluster) for details), please update the contents of [snakemake_profile/](snakemake_profile/) to ensure compatibility with the available compute environment.__
+
+#### 1.2 Download IRIS db
+
+IRIS loads a big-data reference database of splicing events and other genomic annotations. These data are included in [IRIS_data.v2.0.0](https://drive.google.com/drive/folders/1zhmXoajD5RyjxVTYbGZ-ebic1VPfEYKz?usp=sharing) (a Google Drive link; size of entire folder is ~400 GB; users can select reference groups to download). The files need to be placed under `./IRIS_data/`
+
+The files can be automatically downloaded with [google_drive_download.py](google_drive_download.py). Downloading a large amount of data with the API requires authentication:
+* https://cloud.google.com/docs/authentication/production
+* https://cloud.google.com/bigquery/docs/authentication/service-account-file
+
+To use the script, first create a service account:
+* Go to google cloud console -> IAM & Admin -> Service Accounts -> create service account
+* Give the new account: role=owner
+* Click the new service account email on the service account page
+* Download a .json key by clicking: keys -> add key -> create new key -> json
+
+That .json key is passed to [google_drive_download.py](google_drive_download.py)
+
+#### 1.3 Download IEDB MHC I prediction tools
+
+Download `IEDB_MHC_I-2.15.5.tar.gz` from the IEDB website (see [Dependencies](#dependencies)). Create a folder named `IEDB/` in the IRIS folder, then move the downloaded gz file to `IEDB/`. From http://tools.iedb.org/main/download/
+* click "MHC Class I"
+* click "previous version"
+* find and download version 2.15.5
+
+The manual download is needed because there is a license that must be accepted.
+
+### 2. Install
+
+[./install](./install) can automatically install most dependencies to conda environments:
+* conda must already be installed for the script to work
+  + https://docs.conda.io/en/latest/miniconda.html
+* The install script will check if `IRIS_data/` has been downloaded
+  + To download see [1.2 Download IRIS db](#12-download-iris-db)
+* The install script will check if IEDB tools has been downloaded
+  + To download see [1.3 Download IEDB MHC I prediction tools](#13-download-iedb-mhc-i-prediction-tools)
+
+Under the IRIS folder, to install IRIS [core dependencies](#core-dependencies-required-for-major-iris-functionssteps---format-screen-and-predict), do:
 ```
 ./install core
 ```
-Follow instructions to finish the installation of conda, python and its dependencies, bedtools, the downloaded IEDB package, and the IRIS data and packages. To install optional dependencies not needed for the most common IRIS usage:
+
+To install [optional dependencies](#other-dependencies-required-for-processing-raw-rna-seq-and-ms-data) not needed for the most common IRIS usage:
 ```
 ./install all
 ```
 
-### Usage
-- For streamlined AS-derived target discovery, please follow [major modules](#streamlined-major-modules) and run the corresponding toy example.
-- For customized pipeline development, please check [all modules](#individual-modules) of IRIS.
+### 3. Configure for compute cluster
 
-#### Individual modules
-IRIS provides individual modules/steps, allowing users to build pipelines for their customized needs.\
-For a description of each [module/step](IRIS_modules.md), including RNA-seq preprocessing, HLA typing, proteo-transcriptomic MS searching, visualization, etc., please click [here](IRIS_modules.md) or the subheader above.
+[Snakefile](Snakefile) describes the IRIS pipeline. The configuration for running jobs can be set by editing [snakemake_profile/](snakemake_profile/). The provided configuration adapts IRIS to use Slurm. Other compute environments can be supported by updating this directory
+* [snakemake_profile/config.yaml](snakemake_profile/config.yaml): Sets various Snakemake parameters including whether to submit jobs to a cluster.
+* [snakemake_profile/cluster_submit.py](snakemake_profile/cluster_submit.py): Script to submit jobs.
+* [snakemake_profile/cluster_status.py](snakemake_profile/cluster_status.py): Script to check job status.
+* [snakemake_profile/cluster_commands.py](snakemake_profile/cluster_commands.py): Commands specific to the cluster management system being used. The default implementation is for Slurm. Other cluster environments can be used by changing this file. For example, [snakemake_profile/cluster_commands_sge.py](snakemake_profile/cluster_commands_sge.py) can be used to overwrite `cluster_commands.py` to support an SGE cluster.
+* To force Snakemake to execute on the local machine modify [snakemake_profile/config.yaml](snakemake_profile/config.yaml):
+  + comment out `cluster`
+  + set `jobs: {local cores to use}`
+  + uncomment the `resources` section and set `mem_mb: {MB of RAM to use}`
+
+### 4. Known issues
+
+* The conda install of Python 2 may give an error like `ImportError: No module named _sysconfigdata_x86_64_conda_linux_gnu`
+  + Check for the error by activating `conda_env_2` and running `python`
+  + Resolve with commands similar to
+    - `cd conda_env_2/lib/python2.7/`
+    - `cp _sysconfigdata_x86_64_conda_cos6_linux_gnu.py _sysconfigdata_x86_64_conda_linux_gnu.py`
+* The installed version of R may depend on old version of libreadline that is not available in conda
+  + Check for the error by activating `conda_env_2` and running `R`
+  + Resolve by activating `conda_env_2` and manually following the steps in the `install_readline()` function of [./install](./install)
+* IRIS uses `--label-string` to determine which fastq files are for read 1 and read 2
+  + To avoid any issues name your fastq files so that they end with `1.fastq` and `2.fastq` to indicate which file represents which pair of the read
+
+## Usage
+
+* For streamlined AS-derived target discovery, please follow [major functions](#streamlined-major-functions) and run the corresponding toy example.
+* For customized pipeline development, please check [all functions](#individual-functions) of IRIS.
+
+This flowchart shows how the IRIS functions are organized
+
+![iris_diagram](docs/iris_diagram.png)
+
+### Individual functions
+
+IRIS provides individual functions/steps, allowing users to build pipelines for their customized needs. [IRIS_functions.md](IRIS_functions.md) describes each model/step, including RNA-seq preprocessing, HLA typing, proteo-transcriptomic MS searching, visualization, etc.
 ```
-usage: IRIS [-h] [--version]
-            {formatting,screening,prediction,epitope_post,process_rnaseq,makeqsub_rmats,exp_matrix,indexing,translation,pep2epitope,screening_plot,seq2hla,parse_hla,ms_makedb,ms_search,ms_parse}
-            ...
-
 IRIS -- IRIS
 
 positional arguments:
-  {formatting,screening,prediction,epitope_post,process_rnaseq,makeqsub_rmats,exp_matrix,indexing,translation,pep2epitope,screening_plot,seq2hla,parse_hla,ms_makedb,ms_search,ms_parse}
-    formatting          Formats AS matrices from rMATS, followed by indexing for IRIS
-    screening           Screens AS-derived tumor antigens using big-data reference
-    prediction          Predicts and annotates AS-derived TCR (pre-prediction) and CAR-T targets
-    epitope_post        Post-prediction step to summarize predicted TCR targets
-    process_rnaseq      Processes RNA-Seq FASTQ files to quantify gene expression and AS
-    makeqsub_rmats      Makes qsub files for running rMATS-turbo 'prep' step
-    exp_matrix          Makes a merged gene expression matrix from multiple cufflinks results
-    indexing            Indexes AS matrices for IRIS
-    translation         Translates AS junctions into junction peptides
+    format              Formats AS matrices from rMATS, followed by indexing
+                        for IRIS
+    screen              Screens AS-derived tumor antigens using big-data
+                        reference
+    predict             Predicts and annotates AS-derived TCR (pre-prediction)
+                        and CAR-T targets
+    epitope_post        Post-prediction step to summarize predicted TCR
+                        targets
+    process_rnaseq      Processes RNA-Seq FASTQ files to quantify gene
+                        expression and AS
+    makesubsh_mapping   Makes submission shell scripts for running
+                        'process_rnaseq'
+    makesubsh_rmats     Makes submission shell scripts for running rMATS-turbo
+                        'prep' step
+    makesubsh_rmatspost
+                        Makes submission shell scripts for running rMATS-turbo
+                        'post' step
+    exp_matrix          Makes a merged gene expression matrix from multiple
+                        cufflinks results
+    makesubsh_extract_sjc
+                        Makes submission shell scripts for running
+                        'extract_sjc'
+    extract_sjc         Extracts SJ counts from STAR-aligned BAM file and
+                        annotates SJs with number of uniquely mapped reads
+                        that support the splice junction.
+    sjc_matrix          Makes SJ count matrix by merging SJ count files from a
+                        specified list of samples. Performs indexing of the
+                        merged file.
+    index               Indexes AS matrices for IRIS
+    translate           Translates AS junctions into junction peptides
     pep2epitope         Wrapper to run IEDB for peptide-HLA binding prediction
-    screening_plot      Makes stacked/individual violin plots for list of AS events
-    seq2hla             Wrapper to run seq2HLA for HLA typing using RNA-Seq
-    parse_hla           Summarizes seq2HLA results of all input samples into matrices for IRIS use
+    screen_plot         Makes stacked/individual violin plots for list of AS
+                        events
+    screen_sjc          Screens AS-derived tumor antigens by comparing number
+                        of samples expressing a splice junction using big-data
+                        reference of SJ counts
+    append_sjc          Appends SJC result as an annotation to PSI-based
+                        screening results and epitope prediction results in a
+                        specified screening output folder.
+    annotate_ijc        Annotates inclusion junction count info to PSI-based
+                        screening results or epitope prediction results in a
+                        specified screening output folder. Can be called from
+                        append sjc to save time.
+    screen_cpm          Screens AS-derived tumor antigens by comparing splice
+                        junction CPM using big-data reference of SJ counts
+    append_cpm          Appends CPM result as an annotation to PSI-based
+                        screening results and epitope prediction results in a
+                        specified screening output folder.
+    screen_novelss      Screens AS-derived tumor antigens for unannotated
+                        events using big-data reference of SJ counts
+    screen_sjc_plot     Makes stacked/individual barplots of percentage of
+                        samples expressing a splice junction for list of AS
+                        events
+    makesubsh_hla       Makes submission shell scripts for running seq2HLA for
+                        HLA typing using RNA-Seq
+    parse_hla           Summarizes seq2HLA results of all input samples into
+                        matrices for IRIS use
     ms_makedb           Generates proteo-transcriptomic database for MS search
     ms_search           Wrapper to run MSGF+ for MS search
-    ms_parse            Parses MS search results to generate tables of identified peptides
+    ms_parse            Parses MS search results to generate tables of
+                        identified peptides
+    visual_summary      Makes a graphic summary of IRIS results
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -97,98 +204,218 @@ optional arguments:
 For command line options of each sub-command, type: IRIS COMMAND -h
 ```
 
+### Streamlined major functions
 
-#### Streamlined major modules
-The common use of IRIS immunotherapy target discovery comprises three major steps. For a quick test, see [Example](#example), in which a shell script is provided for a streamlined example run:
-- Step 1. IRIS formatting (& indexing) 
+The common use of IRIS immunotherapy target discovery comprises three major steps. For a quick test, see [Example](#example) which uses the snakemake to run a small data set.
+* Step 1. generate PSI-based AS matrix from rMATS output (& index)
+  + IRIS format option -d should be used to save the generated PSI-based AS matrix to the downloaded IRIS db.
+  + Example files for `rmats_mat_path_manifest` and `rmats_sample_order` can be found under the 'example' folder for the test run.
+  + IRIS index will create an index for the IRIS format generated PSI-based AS matrix, and -o should be the path to the folder containing the AS matrix.
 ```
-usage: IRIS formatting [-h] -t {SE,RI,A3,A5} -n DATA_NAME -s {1,2}
-                       [-c COV_CUTOFF] [-e] [-d IRIS_DB_PATH]
-                       rmats_mat_path_manifest rmats_sample_order
-```
+usage: IRIS format [-h] -t {SE,RI,A3SS,A5SS} -n DATA_NAME -s {1,2}
+                   [-c COV_CUTOFF] [-i] [-e] [-d IRIS_DB_PATH] [--novelSS]
+                   [--gtf GTF]
+                   rmats_mat_path_manifest rmats_sample_order
 
-- Step 2. IRIS screening (& translation) 
-Here is a [description of the parameter file](example/parameter_file_description.txt) and an [example file](example/Test.para).
-```
-usage: IRIS screening [-h] [-o OUTDIR] [-t] parameter_fin
-```
-
-- Step 3. IRIS prediction (predicts both extracellular targets and epitopes; __requires SGE system__)
-```
-usage: IRIS prediction [-h] [-p PARAMETER_FIN] [--iedb-local IEDB_LOCAL]
-                       [-c DELTAPSI_COLUMN] [-d DELTAPSI_CUT_OFF] -m MHC_LIST
-                       [--extracellular-anno-by-junction]
-                       IRIS_screening_result_path
-                          
-usage: IRIS epitope_post [-h] -p PARAMETER_FIN -o OUTDIR -m MHC_BY_SAMPLE
-                         [-e GENE_EXP_MATRIX] [--ic50-cut-off IC50_CUT_OFF]
+usage: IRIS index [-h] -t {SE,RI,A3SS,A5SS} -n DATA_NAME
+                  [-c COV_CUTOFF] [-o OUTDIR]
+                  splicing_matrix
 ```
 
+* Step 2. IRIS screen (& translation) ('tumor-association' screen)
+  + [example/parameter_file_description.txt](example/parameter_file_description.txt) describes `PARAMETER_FIN` and [example/Test.para](example/Test.para) is an example.
+  +  Option -t is required for TCR target prediction
+```
+usage: IRIS screen [-h] -p PARAMETER_FIN
+                   --splicing-event-type {SE,RI,A3SS,A5SS} -o OUTDIR [-t]
+                   [-g GTF] [--all-orf] [--ignore-annotation]
+                   [--remove-early-stop] [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--use-existing-test-result]
+```
 
-### Example
-We provide a wrapper ([run_example](run_example)) to run the above [IRIS streamlined major modules](#streamlined-major-modules) using [example files](example), included in the IRIS package. For customized pipeline development, we recommend that users use this script and [run_iris](run_iris) as a reference. Under the IRIS folder, do:
+* Step 3. IRIS predict (predicts both extracellular targets and epitopes; __designed for cluster execution__)
+  + IRIS predict can generate CAR-T annotation results and prepare a job array submission for TCR epitope prediction. TCR prediction preparation is optional and can be disabled by using --extraceullular-only.
+  + `IRIS epitope_post` will summarize TCR epitope prediction results after TCR epitope prediction jobs from IRIS predict are submitted and finished (job array submission step can be done manually or using snakemake)
+  + `MHC_LIST` and `MHC_BY_SAMPLE` can be generated by running `HLA_typing` (within or outside IRIS). Note that it is not necessary to restrict HLA types detected from input RNA samples. It is recommended for users to specify dummy files only containing HLA types of interest or common HLA types as long as HLA types in the dummy `hla_types.list` and `hla_patient.tsv` are consistent. Example files for `hla_types.list` and `hla_patient.tsv` can be found under [example/HLA_types/](example/HLA_types/).
 ```
-./run_example
-```
-__As mentioned in [Usage](#usage), this example run will involve submitting the job array to the SGE system.__ It will take < 5 min for the formatting and screening steps and usually < 15 min for the prediction step (SGE job arrays).\
-A successful test run will generate the following result files in ./results/example/Glioma_test/screening (row numbers are displayed before each file name):
-```
-      0 _example_Glioma_test.notest.txt
-     13 _example_Glioma_test.primary.txt
-      3 _example_Glioma_test.primary.txt.ExtraCellularAS.txt
-     11 _example_Glioma_test.prioritized.txt
-      3 _example_Glioma_test.prioritized.txt.ExtraCellularAS.txt
-     13 _example_Glioma_test.test.all.txt
-     13 primary/epitope_summary.junction-based.txt
-     74 primary/epitope_summary.peptide-based.txt
-    148 primary/pred_filtered.score500.txt 
-     11 prioritized/epitope_summary.junction-based.txt
-     45 prioritized/epitope_summary.peptide-based.txt
-     84 prioritized/pred_filtered.score500.txt
-```
-__Users can refer to relative paths in the parameter file Test.para, the file manifest matrice.txt, and the file samples.txt. These relative paths were made for the example run. Users will need to change the path for their own analyses.__ The run_iris script takes as input a [simplified parameter file](example/Test_simplified.para) and a .tar.gz of the [SJ_matrices](example/SJ_matrices.tar.gz) which are preprocessed before calling the IRIS modules. The preprocessing adds absolute paths based on the input relative paths.
+usage: IRIS predict [-h] --task-dir TASK_DIR -p PARAMETER_FIN
+                    -t {SE,RI,A3SS,A5SS} [--iedb-local IEDB_LOCAL]
+                    [-m MHC_LIST] [--extracellular-only] [--tier3-only]
+                    [--gene-exp-matrix GENE_EXP_MATRIX] [-c DELTAPSI_COLUMN]
+                    [-d DELTAPSI_CUT_OFF] [-e EPITOPE_LEN_LIST] [--all-orf]
+                    [--extracellular-anno-by-junction]
+                    IRIS_screening_result_path
 
-### Example output
+usage: IRIS epitope_post [-h] -p PARAMETER_FIN -o OUTDIR
+                         -t {SE,RI,A3SS,A5SS} -m MHC_BY_SAMPLE
+                         -e GENE_EXP_MATRIX [--tier3-only] [--keep-exist]
+                         [--epitope-len-list EPITOPE_LEN_LIST]
+                         [--no-match-to-canonical-proteome]
+                         [--no-uniqueness-annotation]
+                         [--ic50-cut-off IC50_CUT_OFF]
+```
+
+* Step 4. IRIS screen of the presence-absence of splice junctions (required for the 'tumor-specificity' screen)
+  + IRIS append_sjc combines `screen` and `screen_sjc` results (by appending `screen_sjc` outputs to `screen` outputs). The 'integrated' output contains annotations for tumor-specific targets.
+  + IRIS append_sjc -i option can be used to execute both IRIS append_sjc and IRIS annotate_ijc functions. If -i option is used, -p and -e arguments are required.
+```
+usage: IRIS screen_sjc [-h] -p PARAMETER_FIN
+                       --splicing-event-type {SE,RI,A3SS,A5SS}
+                       -e EVENT_LIST_FILE -o OUTDIR
+                       [--use-existing-test-result]
+                       [--tumor-read-cov-cutoff TUMOR_READ_COV_CUTOFF]
+                       [--normal-read-cov-cutoff NORMAL_READ_COV_CUTOFF]
+
+usage: IRIS append_sjc [-h] --sjc-summary SJC_SUMMARY
+                       --splicing-event-type {SE,RI,A3SS,A5SS} -o OUTDIR
+                       [-i] [-u] [-p PARAMETER_FILE]
+                       [-e SCREENING_RESULT_EVENT_LIST]
+                       [--inc-read-cov-cutoff INC_READ_COV_CUTOFF]
+                       [--event-read-cov-cutoff EVENT_READ_COV_CUTOFF]
+
+usage: IRIS annotate_ijc [-h] -p PARAMETER_FILE
+                         --splicing-event-type {SE,RI,A3SS,A5SS}
+                         -e SCREENING_RESULT_EVENT_LIST -o OUTDIR
+                         [--inc-read-cov-cutoff INC_READ_COV_CUTOFF]
+                         [--event-read-cov-cutoff EVENT_READ_COV_CUTOFF]
+
+```
+
+
+### Snakemake
+
+The Snakemake workflow can be run with [./run](./run). First set the configuration values in [snakemake_config.yaml](snakemake_config.yaml)
+* Set the resources to allocate for each job:
+  + `{job_name}_{threads}`
+  + `{job_name}_{mem_gb}`
+  + `{job_name}_{time_hr}`
+* Set the reference files
+  + Provide the file names as `gtf_name:` and `fasta_name:`
+  + Either place the files in `./references/`
+  + Or provide a url under `reference_files:` to download the (potentially gzipped) files:
+```
+gtf_name: 'some_filename.gtf'
+fasta_name: other_filename.fasta'
+reference_files:
+  some_filename.gtf.gz:
+    url: 'protocol://url/for/some_filename.gtf.gz'
+  other_filename.fasta.gz:
+    url: 'protocol://url/for/other_filename.fasta.gz'
+```
+* Set the input files
+  + `sample_fastqs:` Set the read 1 and read 2 fastq files for each sample. For example:
+```
+sample_fastqs:
+  sample_name_1:
+    - '/path/to/sample_1_read_1.fq'
+    - '/path/to/sample_1_read_2.fq'
+  sample_name_2:
+    - '/path/to/sample_2_read_1.fq'
+    - '/path/to/sample_2_read_2.fq'
+```
+  + `blacklist`: an optional black list of AS events similar to [IRIS/data/blacklist.brain_2020.txt](IRIS/data/blacklist.brain_2020.txt)
+  + `mapability_bigwig`: an optional file for evaluating splice region mappability similar to `IRIS_data/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig`
+  + `mhc_list`: required if not starting with fastq files. similar to [example/HLA_types/hla_types.list](example/HLA_types/hla_types.list)
+  + `mhc_by_sample`: required if not starting with fastq files. similar to [example/HLA_types/hla_patient.tsv](example/HLA_types/hla_patient.tsv)
+  + `gene_exp_matrix`: optional tsv file with geneName as the first column and the expression for each sample in the remaining columns
+  + `splice_matrix_txt`: optional output file from IRIS index that can be used as a starting point
+  + `splice_matrix_idx`: the index file for `splice_matrix_txt`
+  + `sjc_count_txt`: optional output file from IRIS sjc_matrix that can be used as a starting point. Only relevant if `should_run_sjc_steps`
+  + `sjc_count_idx`: the index file for `sjc_count_txt`
+* Set other options
+  + `run_core_modules`: set to `true` to start with existing `IRIS format` output and HLA lists
+  + `run_all_modules`: set to `true` to start with fastq files
+  + `should_run_sjc_steps`: set to `true` to enable splice junction based evaluation steps
+  + `star_sjdb_overhang`: used by STAR alignment. Ideally it should be `read_length -1`, but the STAR manual says that 100 should work well as a default
+  + `run_name`: used to name output files that will be written to `IRIS_data/`
+  + `splice_event_type`: one of `[SE, RI,A3SS, A5SS]`
+  + `comparison_mode`:one of `[group, individual]`
+  + `stat_test_type`: one of `[parametric, nonparametric]`
+  + `use_ratio`: set to `true` to require a ratio of reference groups to pass the checks rather than a fixed count
+  + `tissue_matched_normal_..._{cutoff}`: set the cutoffs for the tissue matched normal reference group (tier 1)
+  + `tissue_matched_normal_reference_group_names`: a comma separate list of directory names under `IRIS_data/db`
+  + `tumor_..._{cutoff}`: set the cutoffs for the tumor reference group (tier 2)
+  + `tumor_reference_group_names`: a comma separate list of directory names under `IRIS_data/db`
+  + `normal_..._{cutoff}`: set the cutoffs for the normal reference group (tier 3)
+  + `normal_reference_group_names`: a comma separate list of directory names under `IRIS_data/db`
+
+## Example
+
+The snakemake is configured to run the above [IRIS streamlined major functions](#streamlined-major-functions) using [example/](example/). For customized pipeline development, we recommend that users refer to the [Snakefile](Snakefile) as a reference. [Snakefile](Snakefile) defines the steps of the pipeline. Update the `/path/to/` values with full paths in [snakemake_config.yaml](snakemake_config.yaml) and make any adjustments to [snakemake_profile/](snakemake_profile/). Then
+```
+./run
+```
+__As mentioned in [Usage](#usage), the full example is designed to be run with a compute cluster.__ It will take < 5 min for the formatting and screening steps and usually < 15 min for the prediction step (depending on available cluster resources).
+
+
+A successful test run will generate the following result files in `./results/NEPC_test/screen/` (row numbers are displayed before each file name):
+```
+    0 NEPC_test.SE.notest.txt
+    1 NEPC_test.SE.test.all_guided.txt
+    1 NEPC_test.SE.tier1.txt
+    1 NEPC_test.SE.tier1.txt.integratedSJC.txt
+    4 NEPC_test.SE.tier2tier3.txt.ExtraCellularAS.txt
+    4 NEPC_test.SE.tier2tier3.txt.ExtraCellularAS.txt.integratedSJC.txt
+    6 NEPC_test.SE.tier2tier3.txt
+    6 NEPC_test.SE.tier2tier3.txt.ijc_info.txt
+    6 NEPC_test.SE.tier2tier3.txt.integratedSJC.txt
+   11 NEPC_test.SE.test.all_voted.txt
+    4 SE.tier2tier3/epitope_summary.junction-based.txt
+    4 SE.tier2tier3/epitope_summary.junction-based.txt.integratedSJC.txt
+    9 SE.tier2tier3/epitope_summary.peptide-based.txt
+    9 SE.tier2tier3/epitope_summary.peptide-based.txt.integratedSJC.txt
+   11 SE.tier2tier3/pred_filtered.score500.txt
+```
+A summary graphic is generated to `./results/NEPC_test/visualization/summary.png`
+
+## Example output
+
 Final reports are shown in __bold__ font.
 
-#### Screening results
-[TASK/DATA_NAME].test.all.txt: All AS events tested by IRIS screening
+### Screening results
 
-[TASK/DATA_NAME].notest.txt: During screening, AS events skipped due to no variance or no available comparisons
+`[TASK/DATA_NAME].[AS_TYPE].test.all_guided.txt`: All AS events tested by IRIS screening with tissue-matched normal tissue reference panel available. One-sided test will be used to generate p-value.
 
-[TASK/DATA_NAME].primary.txt: Tumor AS events after comparison to tissue-matched normal panel ('primary' events)
+`[TASK/DATA_NAME].[AS_TYPE].test.all_voted.txt`: All AS events tested by IRIS screening without tissue-matched normal tissue reference panel. Two-sided test will be used to generate p-value for comparisons to normal panels.
 
-[TASK/DATA_NAME].prioritized.txt: Tumor AS events after comparison to tissue-matched normal panel, tumor panel, and normal tissue panel ('prioritized' AS events)
+`[TASK/DATA_NAME].[AS_TYPE].notest.txt`: During screening, AS events skipped due to no variance or no available comparisons
 
-#### CAR-T annotation reports
-__[TASK/DATA_NAME].primary.txt.ExtraCellularAS.txt__: Tumor AS events in 'primary' set that are associated with protein extracellular annotation and may be used for CAR-T targets
+`[TASK/DATA_NAME].[AS_TYPE].tier1.txt`: Tumor AS events after comparison to tissue-matched normal panel ('tier1' events)
 
-__[TASK/DATA_NAME].prioritized.txt.ExtraCellularAS.txt__: Tumor AS events in 'prioritized' set that are associated with protein extracellular annotation and may be used for CAR-T targets
+`[TASK/DATA_NAME].[AS_TYPE].tier2tier3.txt`: Tumor AS events after comparison to tissue-matched normal panel, tumor panel, and normal tissue panel ('tier3' AS events)
 
-#### TCR prediction reports
-primary/pred_filtered.score500.txt: IEDB prediction outputs for AS junction peptides from 'primary' set with HLA-peptide binding IC50 values passing user-defined cut-off
+### CAR-T annotation reports
 
-__primary/epitope_summary.peptide-based.txt__: AS-derived epitopes from 'primary' set that are predicted to bind user-defined HLA type
+__`[TASK/DATA_NAME].[AS_TYPE].tier1.txt.ExtraCellularAS.txt`__: Tumor AS events in 'tier1' set that are associated with protein extracellular annotation and may be used for CAR-T targets
 
-__primary/epitope_summary.junction-based.txt__: Epitope-producing AS junctions from 'primary' set that are predicted to bind user-defined HLA type
+__`[TASK/DATA_NAME].[AS_TYPE].tier2tier3.txt.ExtraCellularAS.txt`__: Tumor AS events in 'tier3' set that are associated with protein extracellular annotation and may be used for CAR-T targets
 
-prioritized/pred_filtered.score500.txt: IEDB prediction outputs for AS junction peptides from 'prioritized' set with HLA-peptide binding IC50 value passing user-defined cut-off
+### TCR prediction reports
 
-__prioritized/epitope_summary.peptide-based.txt__: AS-derived epitopes from 'prioritized' set that are predicted to bind user-defined HLA type
+`[AS_TYPE].tier1/pred_filtered.score500.txt`: IEDB prediction outputs for AS junction peptides from 'tier1' set with HLA-peptide binding IC50 values passing user-defined cut-off
 
-__prioritized/epitope_summary.junction-based.txt__: Epitope-producing AS junctions from 'prioritized' set that are predicted to bind user-defined HLA type 
+__`[AS_TYPE].tier1/epitope_summary.peptide-based.txt`__: AS-derived epitopes from 'tier1' set that are predicted to bind user-defined HLA type
 
+__`[AS_TYPE].tier1/epitope_summary.junction-based.txt`__: Epitope-producing AS junctions from 'tier1' set that are predicted to bind user-defined HLA type
 
+`[AS_TYPE].tier2tier3/pred_filtered.score500.txt`: IEDB prediction outputs for AS junction peptides from 'tier3' set with HLA-peptide binding IC50 value passing user-defined cut-off
 
+__`[AS_TYPE].tier2tier3/epitope_summary.peptide-based.txt`__: AS-derived epitopes from 'tier3' set that are predicted to bind user-defined HLA type
 
+__`[AS_TYPE].tier2tier3/epitope_summary.junction-based.txt`__: Epitope-producing AS junctions from 'tier3' set that are predicted to bind user-defined HLA type
 
- ### Contact
+### Tumor-specific screen reports
+
+Screening or prediction outputs that integrated `screen` and `screen_sjc` results contain annotation for tumor-specific targets. These output files are indicated by `.integratedSJC.txt`, such as `[TASK/DATA_NAME].[AS_TYPE]tier2tier3.txt.integratedSJC.txt` and __`[AS_TYPE].tier2tier3/epitope_summary.peptide-based.txt.integratedSJC.txt`__, etc.
+
+## Contact
+
 Yang Pan <panyang@ucla.edu>
 
+Eric Kutschera <KUTSCHERAE@chop.edu>
+
 Yi Xing <yxing@ucla.edu>
-                     
 
+## Publication
 
-### Publication
 Manuscript in submission
- 

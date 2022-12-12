@@ -1,4 +1,3 @@
-
 import numpy as np
 import os, glob, pyBigWig, argparse
 from scipy import stats
@@ -57,28 +56,29 @@ def fetch_PsiMatrix(eid, fn, outdir, delim, index=None):
 		data = np.asarray(f.readline().strip().split(delim))
 	return (header, data)
 
-def openTestingFout(outdir, out_prefix, summary_file, ref_list, test_mode):
+def openTestingFout(outdir, out_prefix, splicing_event_type, summary_file, panel_list, test_mode, fin_name=''):
 	header=['as_event','meanPSI','Q1PSI','Q3PSI']
 	if test_mode=='group':
 		header_prefix=['_pVal','_deltaPSI','_tumorFC']
 	if test_mode=='personalized':
 		header_prefix=['_modifiedPctl','_deltaPSI','_tumorFC']
-	fout=open(outdir+'/'+out_prefix+'.test.all.txt','w')
+	fout_name=outdir+'/'+out_prefix+'.'+splicing_event_type+'.test.all_'+fin_name+'.txt'
+	fout=open(fout_name,'w')
 	if summary_file==False:
-		header+=['\t'.join(map(lambda x:ref+x ,header_prefix)) for ref in ref_list if ref!=out_prefix]
+		header+=['\t'.join(map(lambda x:ref+x ,header_prefix)) for ref in panel_list if ref!=out_prefix]
 	fout.write('\t'.join(header)+'\n')
-	return fout
+	return fout, fout_name
 
-def openScreeningFout(outdir, out_prefix, fout_name):
-	fout=open(outdir+'/'+out_prefix+'.'+fout_name+'.txt','w')
+def openScreeningFout(outdir, out_prefix, splicing_event_type, fout_name):
+	fout=open(outdir+'/'+out_prefix+'.'+splicing_event_type+'.'+fout_name+'.txt','w')
 	fout.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format('as_event','meanPSI','Q1PSI','Q3PSI','deltaPSI','fc_of_tumor_isoform','tissue_matched_normal_panel','tumor_panel','normal_panel','tag','mappability','mappability_tag'))
 	return fout
 
-def writeSummaryFile(out_prefix, db_dir, index, fout): #no screening, preparing for MS search
-	fin_name=db_dir+'/'+out_prefix+'/splicing_matrix/splicing_matrix.SE.cov10.'+group_name+'.txt'
+def writeSummaryFile(out_prefix, splicing_event_type, db_dir, index, fout, fetching_data_col): #no screening, preparing for MS search
+	fin_name=db_dir+'/'+out_prefix+'/splicing_matrix/splicing_matrix.'+splicing_event_type+'.cov10.'+group_name+'.txt'
 	index[out_prefix]=read_PsiMatrix_index(fin_name,'/'.join(fin_name.split('/')[:-1]))
 	for j,k in enumerate(index[out_prefix]):
-		psi_event=map(float,fetch_PsiMatrix(k,fin_name,'.','\t',index[out_prefix])[1][8:])
+		psi_event=map(float,fetch_PsiMatrix(k,fin_name,'.','\t',index[out_prefix])[1][fetching_data_col:])
 		query_mean=[np.nanmean(psi_event),np.nanpercentile(psi_event,25),np.nanpercentile(psi_event,75)]
 		result=[k]+query_mean
 		fout.write('\t'.join(map(str,result))+'\n')
@@ -107,6 +107,21 @@ def getMappability(splicing_event,bw_map,d):
 	mappability=[str(up_mean),str(target_mean),str(down_mean)]
 	return mappability
 
+def getDirection(filter1_panel_list, psi, test, non_parametric, screening_type):
+	psi_primary=[]
+	deltaPSI_primary=[]
+	for primary_group in filter1_panel_list:
+		if test[primary_group]!=['-']*3:
+			psi_primary+=psi[primary_group]
+			deltaPSI_primary.append(test[primary_group][1])
+	if psi_primary==[]: #in case tissue-matched normal doesn't have data
+		return [],[]
+	else:
+		direction='greater' if non_parametric else 'larger'
+		if np.median(deltaPSI_primary)<=0:
+			direction='less' if non_parametric else 'smaller'
+		return psi_primary, direction
+		
 def calcTumorFormFoc(delta_psi, mean_psi):
 	if delta_psi>0:
 		return mean_psi/(mean_psi - delta_psi+10**-8)
@@ -137,91 +152,127 @@ def one2N(p1, g1, test_type):
 	else:
 		return [np.nan,delta_psi,tumor_foc]
 
-#def groupTest(g1,g2, test_type, threshold_tost=0.05):
-def groupTest(g1,g2, test_type, direction='two-sided'):
+def statTest(g1,g2, direction, non_parametric):
+	if direction != 'equivalence':
+		if non_parametric:
+			pvalue=stats.mannwhitneyu(g1,g2, alternative=direction)[1]
+		else:
+			pvalue=smw.ttest_ind(g1,g2, alternative=direction, usevar='unequal')[1]
+			#pvalue=smw.ttest_ind(g1,g2, alternative=direction)[1]
+	else:
+		threshold_tost = 0.05
+		pvalue=smw.ttost_ind(g1,g2,-threshold_tost,threshold_tost,usevar='unequal')[0] #equivalence test
+	return pvalue
+
+def statTest_minSampleCount(g1,g2, direction, non_parametric):#Only enabled when filters out by min_sample_count. With enough sample, using the default setting assume equal var for both groups is ok.
+	if direction != 'equivalence':
+		if non_parametric:
+			pvalue=stats.mannwhitneyu(g1,g2, alternative=direction)[1]
+		else:
+			pvalue=smw.ttest_ind(g1,g2, alternative=direction)[1]
+			#pvalue=smw.ttest_ind(g1,g2, alternative=direction)[1]
+	else:
+		threshold_tost = 0.05
+		pvalue=smw.ttost_ind(g1,g2,-threshold_tost,threshold_tost)[0] #equivalence test
+	return pvalue
+
+def groupTest(g1,g2, non_parametric=False, direction='two-sided', min_sample_count=False):
 	g1=np.array(g1)
 	g2=np.array(g2)
 	g1=g1[~np.isnan(g1)]
 	g2=g2[~np.isnan(g2)]
 	delta_psi=np.nanmean(g1)-np.nanmean(g2)
 	tumor_foc=calcTumorFormFoc(delta_psi,np.nanmean(g1))
-	if test_type=='sig':
-		t1=stats.ttest_ind(g1,g2)[1]
-	elif test_type=='equ':
-	 	t1=smw.ttest_ind(g1,g2,alternative='two-sided')[1]
-	# 	t1=smw.ttost_ind(g1,g2,-threshold_tost,threshold_tost,usevar='unequal')[0] #equalvalence test
-	return [t1, delta_psi, tumor_foc]
+	if min_sample_count:
+		pvalue = statTest_minSampleCount(g1, g2, direction, non_parametric)
+	else:	
+		pvalue = statTest(g1, g2, direction, non_parametric)
+	return [pvalue, delta_psi, tumor_foc]
 
-def getDirection(filter1, psi, test):
-	psi_primary=[]
-	deltaPSI_primary=[]
-	for primary_group in filter1:
-		if test[primary_group]!=['-']*3:
-			psi_primary+=psi[primary_group]
-			deltaPSI_primary+=test[primary_group]
-	if psi_primary==[]: #in case tissue-matched normal doesn't have data
-		return [],[]
-	else:
-		direction='larger'
-		if np.median(deltaPSI_primary)<=0:
-			direction='smaller'
-		return psi_primary, direction
-	
-def summarizeTestResult(filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc,filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, primary, tumor_rec, pval, deltaPSI, foc, testing_type_index):
-	differential,equal,positive,negative=[0,0,0,0]
-	testable=0
+def performTest(set_matched_tumor, has, j, group, screening_type_list, psi, out_prefix, non_parametric, test, filter1_panel_list, psi_primary, direction, min_sample_count): #PSI value-based screen allow two-sided or one-sided tests. Different from SJ count or CPM-based screen, where only one-sided test is needed.
+	screening_type = screening_type_list[j]
+	redirect_output = False
+	test_result = ['-']*3 #For missing in non-eesential tests/comparisons
+	if screening_type == 'association':
+		if has[group]:
+			test_result = groupTest(psi[out_prefix],psi[group], non_parametric,"two-sided", min_sample_count)
+		return test_result
+
+	has_matched_tumor = False if psi_primary == [] else True #for clarity
+
+	if screening_type == 'recurrence':
+		if set_matched_tumor and has_matched_tumor:#set_matched_tumor is redundent here. kept for future implemtation of additional output type.
+			if has[group]:
+				test_result = groupTest(psi[group],psi_primary, non_parametric, direction, min_sample_count)
+		else:
+			if has[group]:
+				test_result = groupTest(psi[out_prefix],psi[group], non_parametric, "equivalence", min_sample_count)#No or equivalent testing -John's use case		
+		return test_result
+
+	if screening_type == 'association_high':
+		if set_matched_tumor and has_matched_tumor:
+			if has[group]:
+				test_result = groupTest(psi[out_prefix],psi[group], non_parametric, direction, min_sample_count)
+		else:
+			if has[group]:
+				test_result = groupTest(psi[out_prefix],psi[group], non_parametric, "two-sided", min_sample_count) #Two-sided testing 		
+		return test_result
+
+def summarizeTestResult(filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc,filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, pval, deltaPSI, foc, screening_type_list):
+	association_passed,recurrence_passed,specificity_positive,specificity_negative, specificity_testable=[0,0,0,0,0]
 	primary_result, primary_result_foc=[[],[]] #take care of multiple tiisue matched norm
-	deltapsi_list,foc_list=[[],[]] #if no tissue-matched norm, use median
-	for i,group_type in enumerate(testing_type_index):
-		if pval[i]=='-':
+	deltapsi_list_voted,foc_list_voted=[[],[]] #if no tissue-matched norm, use median
+	for i,group_type in enumerate(screening_type_list):
+		if pval[i]=='-': #This is important - skip all missing, which is not useful for summarizing but not affecting consistancy.
 			continue
-		if i<primary:
-			primary_result.append(float(deltaPSI[i]))
+		if screening_type_list[i]=='association': 
+			primary_result.append(float(deltaPSI[i])) 
 			primary_result_foc.append(float(foc[i]))
 			if float(pval[i])<=filter1_cutoff_pval and abs(float(deltaPSI[i]))>=filter1_cutoff_dpsi and float(foc[i])>=filter1_cutoff_foc:
-					differential+=1
+					association_passed+=1
 					continue
-		if testing_type_index[i]=='equ':
+		if screening_type_list[i]=='recurrence':
 			if float(pval[i])<=filter2_cutoff_pval and abs(float(deltaPSI[i]))>=filter2_cutoff_dpsi:
-					equal+=1
+					recurrence_passed+=1
 					continue
-		if testing_type_index[i]=='sig' and i>=(primary+tumor_rec):
-			testable+=1
+		if screening_type_list[i]=='association_high':# TODO: judge set/has, then run
+			specificity_testable+=1
 			if float(pval[i])<=filter3_cutoff_pval and float(foc[i])>=filter3_cutoff_foc:
-				deltapsi_list.append(float(deltaPSI[i]))
-				foc_list.append(float(foc[i]))
+				deltapsi_list_voted.append(float(deltaPSI[i]))
+				foc_list_voted.append(float(foc[i]))
 				if float(deltaPSI[i])>=filter3_cutoff_dpsi:
-					positive+=1
+					specificity_positive+=1
 					continue
 				if float(deltaPSI[i])<=-filter3_cutoff_dpsi:
-					negative+=1
+					specificity_negative+=1
 					continue
-	return differential,equal,positive,negative,testable, np.median(primary_result), np.median(primary_result_foc), deltapsi_list,foc_list
+	return association_passed,recurrence_passed,specificity_positive,specificity_negative,specificity_testable, np.median(primary_result), np.median(primary_result_foc), deltapsi_list_voted,foc_list_voted
 
-def defineTumorEvents(filter1_group_cutoff,filter2_group_cutoff,filter3_group_cutoff, primary, norm_tissue, differential, equal, positive, negative, testable, primary_result, primary_result_foc, deltapsi_list,foc_list, use_ratio):
+def defineTumorEvents(filter1_group_cutoff,filter2_group_cutoff,filter3_group_cutoff, set_matched_tumor, specificity_panel_len, association_passed, recurrence_passed, specificity_positive, specificity_negative, specificity_testable, primary_result, primary_result_foc, deltapsi_list_voted, foc_list_voted, use_ratio):
 	tag=[]
- 	if differential>=filter1_group_cutoff:
+ 	if association_passed>=filter1_group_cutoff:#Improvement? current: 0>='' is false
  		tag.append('associated')
- 	if equal>=filter2_group_cutoff:
+ 	if recurrence_passed>=filter2_group_cutoff:
  		tag.append('recurrent') 
-	if primary==0:
-		tissue_specificity=max(positive,negative)
-		ratio=False if use_ratio==False else tissue_specificity/(testable+10**-8)>=filter3_group_cutoff/(norm_tissue+0.0)
-		if tissue_specificity>=filter3_group_cutoff or ratio:
-			tag.append('specific')
-	else: 
+	if set_matched_tumor:#TODO-FUTURE: take care of set-yes has-no redirected events
 		if primary_result>0:
-			tissue_specificity=positive
-			ratio=False if use_ratio==False else positive/(testable+10**-8)>=filter3_group_cutoff/(norm_tissue+0.0)
-			if positive>=filter3_group_cutoff or ratio:
-				tag.append('specific')
+			tissue_specificity=specificity_positive
+			ratio=False if use_ratio==False else specificity_positive/(specificity_testable+10**-8)>=filter3_group_cutoff/(specificity_panel_len+0.0)
+			if specificity_positive>=filter3_group_cutoff or ratio:
+				tag.append('high_assoc')
 		else:
-			tissue_specificity=negative
-			ratio=False if use_ratio==False else negative/(testable+10**-8)>=filter3_group_cutoff/(norm_tissue+0.0)
-			if negative>=filter3_group_cutoff or ratio:
-				tag.append('specific')
-	primary_deltapsi=primary_result if primary_result!=0 else np.median(deltapsi_list)
-	primary_foc=primary_result_foc if primary_result!=0 else np.median(foc_list)
+			tissue_specificity=specificity_negative
+			ratio=False if use_ratio==False else specificity_negative/(specificity_testable+10**-8)>=filter3_group_cutoff/(specificity_panel_len+0.0)
+			if specificity_negative>=filter3_group_cutoff or ratio:
+				tag.append('high_assoc')
+	else: 
+		tissue_specificity=max(specificity_positive,specificity_negative)
+		ratio=False if use_ratio==False else tissue_specificity/(specificity_testable+10**-8)>=filter3_group_cutoff/(specificity_panel_len+0.0)
+		if tissue_specificity>=filter3_group_cutoff or ratio:
+			tag.append('high_assoc')
+	primary_deltapsi=primary_result if (primary_result!=0 and set_matched_tumor) else np.median(deltapsi_list_voted)#TODO
+	primary_foc=primary_result_foc if (primary_result!=0 and set_matched_tumor) else np.median(foc_list_voted)
+
 	return primary_deltapsi, primary_foc, tissue_specificity, tag
 
 def mappability_write(k, bw_map, calc_length):
@@ -244,25 +295,28 @@ def loadBlacklistEvents(fin):
 		BlacklistEvents[des]=''
 	return BlacklistEvents
 
-def translationCMD(ref_genome, outdir, out_prefix, fout_name):
+def translationCMD(ref_genome, gtf, outdir, out_prefix, splicing_event_type, all_orf, ignore_annotation, remove_early_stop, fout_name):
 	#uSE name space 
-	#Namespace(outdir='test1', parameter_fin='/u/home/p/panyang/bigdata-nobackup/Glioma_test/GBM.prioritze.par', subcommand='screening', translating=False)
-	cmd_translation='IRIS translation '+outdir+'/'+out_prefix+'.'+fout_name+'.txt '+' -o '+outdir+'/'+fout_name+' -g '+ref_genome
+	argument_line=''
+	if all_orf:
+		argument_line+=' --all-orf'
+	if ignore_annotation:
+		argument_line+=' --ignore-annotation'
+	if remove_early_stop:
+		argument_line+=' --remove-early-stop'
+	cmd_translation='IRIS translate '+outdir+'/'+out_prefix+'.'+splicing_event_type+'.'+fout_name+'.txt '+' -o '+outdir+'/'+splicing_event_type+'.'+fout_name+' -g '+ref_genome+' -t '+splicing_event_type+argument_line+' --gtf '+gtf
 	print '[INFO] Working on translating: '+fout_name
 	os.system(cmd_translation)
 
-def loadParametersRow(filter_para, ref_list):
-	if len(filter_para.split(' '))==6:
-		filter_cutoff_pval, filter_cutoff_dpsi, filter_cutoff_foc, filter_group_cutoff, filter_list =filter_para.split(' ')[1:]
-		filter_cutoff_pval=float(filter_cutoff_pval)
-		filter_cutoff_dpsi=float(filter_cutoff_dpsi)
-		filter_cutoff_foc=float(filter_cutoff_foc)
-		filter_group_cutoff=int(filter_group_cutoff)
-		filter_list=filter_list.split(',')		
-		ref_list+=filter_list
+def loadParametersRow(filter_para, panel_list):
+	filter_cutoffs=''
+	if filter_para.strip()!='':
+		filter_cutoffs = map(float,filter_para.strip().split(' ')[0].split(','))
+		filter_panel_list = filter_para.strip().split(' ')[1].split(',')	
+		panel_list+=filter_panel_list
 	else:
-		filter_cutoff_pval, filter_cutoff_dpsi, filter_cutoff_foc, filter_group_cutoff, filter_list =['','','','',[]]
-	return filter_cutoff_pval, filter_cutoff_dpsi, filter_cutoff_foc, filter_group_cutoff, filter_list, ref_list
+		filter_panel_list =[]
+	return filter_cutoffs, filter_panel_list, panel_list
 
 
 def main(args):
@@ -270,162 +324,238 @@ def main(args):
 	index={}
 	fin_list={}
 	para_fin=args.parameter_fin
+	splicing_event_type=args.splicing_event_type
+	fetching_data_col=8 if splicing_event_type == 'SE' else 10
 	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blacklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
-	ref_list=[out_prefix]
+	panel_list=[out_prefix]
+	test_mode=test_mode.split(' ')
 	use_ratio=True if use_ratio=='True' else False
-	if blacklist_path=='':
-		blacklist_path=config.BRAIN_BLACKLIST_PATH
-	blacklist_events=loadBlacklistEvents(blacklist_path)
+	blacklist_events={}
+	min_sample_count=args.min_sample_count
+	if min_sample_count:
+		min_sample_count=int(min_sample_count)
+        if blacklist_path!='':
+            #if blacklist_path=='BRAIN_BLACKLIST_PATH':
+	    blacklist_events=loadBlacklistEvents(blacklist_path)
 	bw_map,calc_length=loadMappability(mappability_path)
 
-	filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc, filter1_group_cutoff, filter1, ref_list =loadParametersRow(filter1_para, ref_list)
-	filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter2_group_cutoff, filter2, ref_list =loadParametersRow(filter2_para, ref_list)
-	filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, filter3_group_cutoff, filter3, ref_list =loadParametersRow(filter3_para, ref_list)
-	if filter1==[] and filter2==[] and filter3==[] and test_mode!='summary':
+	all_orf=args.all_orf
+	ignore_annotation=args.ignore_annotation
+	remove_early_stop=args.remove_early_stop
+	use_existing_test_result=args.use_existing_test_result
+	
+	filter1_cutoffs, filter1_panel_list, panel_list = loadParametersRow(filter1_para, panel_list)
+	filter2_cutoffs, filter2_panel_list, panel_list = loadParametersRow(filter2_para, panel_list)
+	filter3_cutoffs, filter3_panel_list, panel_list = loadParametersRow(filter3_para, panel_list)
+	
+	if filter1_cutoffs!='':
+		filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc, filter1_group_cutoff=filter1_cutoffs[:3]+[filter1_cutoffs[4]]
+	else:
+		filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc, filter1_group_cutoff=['','','','']
+	if filter2_cutoffs!='':
+		filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter2_group_cutoff=filter2_cutoffs[:3]+[filter2_cutoffs[4]]
+	else:
+		filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter2_group_cutoff=['','','','']
+	if filter3_cutoffs!='':
+		filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, filter3_group_cutoff=filter3_cutoffs[:3]+[filter3_cutoffs[4]]
+	else:
+		filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, filter3_group_cutoff=['','','','']
+	if filter1_panel_list==[] and filter2_panel_list==[] and filter3_panel_list==[] and test_mode[0]!='summary':
 		exit("[Error] No filtering required in parameteres file. exit!")
-	group_test=False if test_mode!='group' else True
-	individual_test=False if test_mode!='personalized' else True
-	summary_file=False if test_mode!='summary' else True
+	
+	non_parametric=False
+	if len(test_mode)>1:
+		non_parametric=True if test_mode[1]=='nonparametric' else False
+
+	group_test=False if test_mode[0]!='group' else True
+	individual_test=False if test_mode[0]!='personalized' else True
+	summary_file=False if test_mode[0]!='summary' else True
 	if [group_test,individual_test,summary_file]==[False,False,False]:
 		exit('[Error] Need to choose one mode.exit!')
-	primary=len(filter1)
-	tumor_rec=len(filter2)
-	norm_tissue=len(filter3)
-	filter_count=sum(1 for i in [primary, tumor_rec, norm_tissue] if i!=0)
-	testing_type_index=['sig']*primary+['equ']*tumor_rec+['sig']*norm_tissue
-	
-	db_dir=db_dir.rstrip('/')
-	outdir=args.outdir.rstrip('/')
-	os.system('mkdir -p  '+outdir)
+	association_panel_len=len(filter1_panel_list)
+	recurrence_panel_len=len(filter2_panel_list)
+	specificity_panel_len=len(filter3_panel_list)
+	panel_count=sum(1 for i in [association_panel_len, recurrence_panel_len, specificity_panel_len] if i!=0)
+	screening_type_list=['association']*association_panel_len+['recurrence']*recurrence_panel_len+['association_high']*specificity_panel_len
+	set_matched_tumor= True if screening_type_list[0] == 'association' else False
+        
+        if args.translating:
+            gtf=args.gtf
+            if os.path.exists(gtf)==False:
+                exit('[Error] No gtf file provided for translation. exit!')
 
 	###Create Folders/Output####
-	fout= openTestingFout(outdir, out_prefix, summary_file, ref_list, test_mode)
-	if summary_file:
-		writeSummaryFile(out_prefix, db_dir, index, fout)
-		exit()
-	
-	fout_filtered=open(outdir+'/'+out_prefix+'.notest.txt','w')
-	fout_primary=openScreeningFout(outdir, out_prefix, 'primary')
-	fout_prioritized=openScreeningFout(outdir,out_prefix, 'prioritized')
+	outdir=args.outdir.rstrip('/')
+	os.system('mkdir -p  '+outdir)
+	db_dir=db_dir.rstrip('/')
 
-	for group_name in ref_list:##Load IRIS reference panels
-		fin_list[group_name]=db_dir+'/'+group_name+'/splicing_matrix/splicing_matrix.SE.cov10.'+group_name+'.txt'
+	if use_existing_test_result==False:
+		fout_direct, fout_direct_name= openTestingFout(outdir, out_prefix, splicing_event_type, summary_file, panel_list, test_mode[0], 'guided')
+		fout_redirect, fout_redirect_name=openTestingFout(outdir, out_prefix, splicing_event_type, summary_file, panel_list, test_mode[0], 'voted')
+		if summary_file:
+			writeSummaryFile(out_prefix, splicing_event_type, db_dir, index, fout_direct, fetching_data_col)
+			exit()
+		fout_filtered=open(outdir+'/'+out_prefix+'.'+splicing_event_type+'.notest.txt','w')
+	else:
+		fout_direct_name=outdir+'/'+out_prefix+'.'+splicing_event_type+'.test.all_guided.txt'
+		fout_redirect_name=outdir+'/'+out_prefix+'.'+splicing_event_type+'.test.all_voted.txt'
 
+	fout_primary=openScreeningFout(outdir, out_prefix, splicing_event_type, 'tier1')
+	fout_prioritized=openScreeningFout(outdir,out_prefix, splicing_event_type, 'tier2tier3')
+
+	##Load IRIS reference panels
+	for group_name in panel_list:
+		fin_list[group_name]=db_dir+'/'+group_name+'/splicing_matrix/splicing_matrix.'+splicing_event_type+'.cov10.'+group_name+'.txt'
 	for group in fin_list.keys():
 		if not os.path.isfile(fin_list[group]+'.idx'):
 			exit('[Error] Need to index '+fin_list[group])
 		index[group]=read_PsiMatrix_index(fin_list[group],'/'.join(fin_list[group].split('/')[:-1]))
 
-	has={}
-	#for j,k in enumerate(['ENSG00000083520:DIS3:chr13:-:73345041:73345126:73343050:73345218','ENSG00000110075:PPP6R3:chr11:+:68350510:68350597:68343511:68355265']):	
-	tot=len(index[out_prefix])-1
-	print '[INFO] IRIS screening started. Total input events:', tot+1
-	for event_idx,k in enumerate(index[out_prefix]):
-		config.update_progress(event_idx/(0.0+tot))
+
+	## Load and perform test by row/event
+	if use_existing_test_result==False:
+		has={}
+		tot=len(index[out_prefix])-1
+		print '[INFO] IRIS screen - started. Total input events:', tot+1
 		
-		for group in ref_list:#Initiate
-			if group!=out_prefix:
-				has[group]=True
-		psi={}
-		has_count=0
-		for group in ref_list:
-			if k in index[group]:
-				psi[group]=map(float,fetch_PsiMatrix(k,fin_list[group],'.','\t',index[group])[1][8:])
-				has_count+=1
+		for event_idx,k in enumerate(index[out_prefix]):
+			config.update_progress(event_idx/(0.0+tot))
+			
+			#Initiate  
+			for group in panel_list:
+				if group!=out_prefix:
+					has[group]=True
+			psi={}
+			has_count=0
+			for group in panel_list:
+				if k in index[group]:
+					psi[group]=map(float,fetch_PsiMatrix(k,fin_list[group],'.','\t',index[group])[1][fetching_data_col:])
+					has_count+=1
+				else:
+					has[group]=False
+			#Filtering
+			cat_psi=[]
+			for i in psi:
+				cat_psi+=psi[i]
+			if abs(max(cat_psi)-min(cat_psi))<0.05:#if change less than 5% skipped and no comparison available
+				fout_filtered.write('[Low Range]{}\t{}\t{}\n'.format(k,str(abs(max(cat_psi)-min(cat_psi))),str(has_count))) 
+				continue
+			if k in blacklist_events:
+				fout_filtered.write('[Blacklisted]{}\t{}\t{}\n'.format(k,'-',str(has_count))) 
+				continue
+			if  has_count<=1:
+				fout_filtered.write('[Unique in Input]{}\t{}\t{}\n'.format(k,'-',str(has_count)))
+				continue
+			if min_sample_count:
+				sample_count=np.count_nonzero(~np.isnan(psi[out_prefix]))
+				if sample_count<min_sample_count:
+					fout_filtered.write('[Low Sample Count in Input]{}\t{}\t{}\n'.format(k,str(sample_count),str(has_count)))
+					continue
+			#Testing and store/output results(both group and individual mode)	
+			if group_test:
+				test={}
+				redirect=False
+				psi_primary=''
+				direction=''
+				query_mean=map(lambda k:round(k,2),[np.nanmean(psi[out_prefix]),np.nanpercentile(psi[out_prefix],25),np.nanpercentile(psi[out_prefix],75)])
+				for j,group in enumerate(panel_list[1:]):
+					if screening_type_list[j]!='association' and psi_primary=='':#redirect or find one-sided test direction
+						psi_primary, direction= getDirection(filter1_panel_list, psi, test, non_parametric, screening_type_list[j])
+						redirect = True if psi_primary == [] else False #redirect if tumor-matched normal is missing
+					test[group]=performTest(set_matched_tumor, has, j, group, screening_type_list, psi, out_prefix, non_parametric, test, filter1_panel_list, psi_primary, direction, min_sample_count)				
+				result=[k]+query_mean+['\t'.join(map(str,test[t])) for t in panel_list if t!=out_prefix]
+				
+				if redirect:
+					fout_redirect.write('\t'.join(map(str,result))+'\n') #to redicted; summarize direction and calculate FDR differently.
+				else:
+					fout_direct.write('\t'.join(map(str,result))+'\n')
+
+			elif individual_test:###TODO
+				test={}
+				query_mean=[psi[out_prefix][0],'-','-']
+				for j,group in enumerate(panel_list[1:]):
+					test[group]=['-']*3
+					if has[group]:
+						test[group]=one2N(psi[out_prefix],psi[group],screening_type_list[j])
+
+				result=[k]+query_mean+['\t'.join(map(str,test[t])) for t in panel_list if t!=out_prefix]
+				fout_direct.write('\t'.join(map(str,result))+'\n')###TODO
+			
 			else:
-				has[group]=False
+				exit('[Error] no test performed')
+		fout_filtered.close()
+		fout_redirect.close()
+		fout_direct.close()
 
-		cat_psi=[]
-		for i in psi:
-			cat_psi+=psi[i]
-		if abs(max(cat_psi)-min(cat_psi))<0.05:#if change less than 5% skipped and no comparison available
-			fout_filtered.write('[LowVar]{}\t{}\t{}\n'.format(k,str(abs(max(cat_psi)-min(cat_psi))),str(has_count))) 
+	##Summarize results and priortize screening candidates
+	testing_intermediate_file = fout_direct_name if set_matched_tumor else fout_redirect_name
+
+	tot=config.file_len(testing_intermediate_file)-1
+	if tot==0:
+		exit('[Ended] no test performed because no testable events. Check input or filtering parameteres.') #Modified 2021
+	print '[INFO] IRIS screen - summarizing. Total events from last step:', tot
+	for event_idx,l in enumerate(open(testing_intermediate_file)):
+		config.update_progress(event_idx/(0.0+tot))
+		if event_idx==0:
 			continue
-		if k in blacklist_events:
-			fout_filtered.write('[Blacklisted]{}\t{}\t{}\n'.format(k,'-',str(has_count))) 
-			continue
-		if  has_count<=1:
-			fout_filtered.write('[NoTest]{}\t{}\t{}\n'.format(k,'-',str(has_count)))
-			continue
+		ls=l.strip().split('\t')
+		pval= ls[4::3]# don't do map because '-'
+		deltaPSI = ls[5::3]
+		foc= ls[6::3]
+
+		association_passed,recurrence_passed,specificity_positive,specificity_negative,specificity_testable,primary_result, primary_result_foc, deltapsi_list_voted,foc_list_voted=summarizeTestResult(filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc,filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, pval, deltaPSI, foc, screening_type_list)
+
+		primary_deltapsi, primary_foc, tissue_specificity, tag = defineTumorEvents(filter1_group_cutoff,filter2_group_cutoff,filter3_group_cutoff, set_matched_tumor, specificity_panel_len, association_passed,recurrence_passed,specificity_positive,specificity_negative,specificity_testable,primary_result, primary_result_foc, deltapsi_list_voted,foc_list_voted,use_ratio)
+
+		if tag!=[]:
+			if tag[0]=='associated':
+				mappability_tag, mappability_list=mappability_write(ls[0], bw_map, calc_length)
+				fout_primary.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(ls[0],ls[1],ls[2],ls[3],primary_deltapsi, primary_foc, str(association_passed)+'/'+str(association_panel_len),str(recurrence_passed)+'/'+str(recurrence_panel_len),str(tissue_specificity)+'/'+str(specificity_panel_len),';'.join(tag), ';'.join(mappability_list),mappability_tag))
+
+		if panel_count==len(tag):
+			#if mappability_tag=='':#only if not in associated, then load mappability here
+			mappability_tag, mappability_list=mappability_write(ls[0], bw_map, calc_length) #Modifed 2021
+			fout_prioritized.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(ls[0],ls[1],ls[2],ls[3],primary_deltapsi, primary_foc, str(association_passed)+'/'+str(association_panel_len),str(recurrence_passed)+'/'+str(recurrence_panel_len),str(tissue_specificity)+'/'+str(specificity_panel_len),';'.join(tag),';'.join(mappability_list),mappability_tag))
+
+		mappability_tag, mappability_list=['',''] #clear
 			
-		if group_test:
-			test={}
-			query_mean=[np.nanmean(psi[out_prefix]),np.nanpercentile(psi[out_prefix],25),np.nanpercentile(psi[out_prefix],75)]
-			for j,group in enumerate(ref_list[1:]):
-				test[group]=['-']*3
-				if has[group]:
-					if testing_type_index[j]=='equ':		
-						psi_primary, direction= getDirection(filter1, psi, test)
-						if psi_primary==[]: #in case tissue-matched normal doesn't have data
-							continue 
-						test[group]=groupTest(psi[group],psi_primary, testing_type_index[j], direction)
-					else:
-						test[group]=groupTest(psi[out_prefix],psi[group],testing_type_index[j])
+		# elif individual_test:
+		# 	test={}
+		# 	query_mean=[psi[out_prefix][0],'-','-']
+		# 	for j,group in enumerate(panel_list[1:]):
+		# 		test[group]=['-']*3
+		# 		if has[group]:
+		# 			test[group]=one2N(psi[out_prefix],psi[group],screening_type_list[j])
 
-			result=[k]+query_mean+['\t'.join(map(str,test[t])) for t in ref_list if t!=out_prefix]
-			fout.write('\t'.join(map(str,result))+'\n')
+		# 	result=[k]+query_mean+['\t'.join(map(str,test[t])) for t in panel_list if t!=out_prefix]
+		# 	fout_direct.write('\t'.join(map(str,result))+'\n')
 
-			## summarize test result and prioritze
-			pval=[test[t][0] for t in ref_list if t!=out_prefix]
-			deltaPSI=[test[t][1] for t in ref_list if t!=out_prefix]# select deltapsi col of screening result
-			foc=[test[t][2] for t in ref_list if t!=out_prefix]
-
-			differential,equal,positive,negative,testable,primary_result, primary_result_foc, deltapsi_list,foc_list=summarizeTestResult(filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc,filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, primary, tumor_rec, pval, deltaPSI, foc, testing_type_index)
+		# 	pval=[test[t][0] for t in panel_list if t!=out_prefix]
+		# 	deltaPSI=[test[t][1] for t in panel_list if t!=out_prefix]# select deltapsi col of screening result
+		# 	foc=[test[t][2] for t in panel_list if t!=out_prefix]
 			
-			primary_deltapsi, primary_foc, tissue_specificity, tag = defineTumorEvents(filter1_group_cutoff,filter2_group_cutoff,filter3_group_cutoff, primary, norm_tissue, differential,equal,positive,negative,testable,primary_result, primary_result_foc, deltapsi_list,foc_list,use_ratio)
-
-			if tag!=[]:
-				if tag[0]=='associated':
-					mappability_tag, mappability_list=mappability_write(k, bw_map, calc_length)
-					fout_primary.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(k,query_mean[0],query_mean[1],query_mean[2],primary_deltapsi, primary_foc, str(differential)+'/'+str(primary),str(equal)+'/'+str(tumor_rec),str(tissue_specificity)+'/'+str(norm_tissue),';'.join(tag), ';'.join(mappability_list),mappability_tag))
-
-			if filter_count==len(tag):
-				if mappability_tag=='':#only if not in associated, then load mappability here
-					mappability_tag, mappability_list=mappability_write(k, bw_map, calc_length)
-				fout_prioritized.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(k,query_mean[0],query_mean[1],query_mean[2],primary_deltapsi, primary_foc, str(differential)+'/'+str(primary),str(equal)+'/'+str(tumor_rec),str(tissue_specificity)+'/'+str(norm_tissue),';'.join(tag),';'.join(mappability_list),mappability_tag))
-
-			mappability_tag, mappability_list=['',''] #clear
+		# 	differential,equal,positive,negative,testable,primary_result, primary_result_foc, deltapsi_list,foc_list=summarizeTestResult(filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc,filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, association_panel_len, recurrence_panel_len, pval, deltaPSI, foc, screening_type_list)
 			
-		elif individual_test:
-			test={}
-			query_mean=[psi[out_prefix][0],'-','-']
-			for j,group in enumerate(ref_list[1:]):
-				test[group]=['-']*3
-				if has[group]:
-					test[group]=one2N(psi[out_prefix],psi[group],testing_type_index[j])
+		# 	primary_deltapsi, primary_foc, tissue_specificity, tag = defineTumorEvents(filter1_group_cutoff,filter2_group_cutoff,filter3_group_cutoff, association_panel_len, specificity_panel_len, differential,equal,positive,negative,testable,primary_result, primary_result_foc, deltapsi_list,foc_list,use_ratio)
+		# if tag!=[]:
+		# 	if tag[0]=='associated':
+		# 		mappability_tag, mappability_list=mappability_write(ls[0], bw_map, calc_length)
+		# 		fout_primary.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(ls[0],ls[1],ls[2],ls[3],primary_deltapsi, primary_foc, str(differential)+'/'+str(association_panel_len),str(equal)+'/'+str(recurrence_panel_len),str(tissue_specificity)+'/'+str(specificity_panel_len),';'.join(tag), ';'.join(mappability_list),mappability_tag))
 
-			result=[k]+query_mean+['\t'.join(map(str,test[t])) for t in ref_list if t!=out_prefix]
-			fout.write('\t'.join(map(str,result))+'\n')
+		# if panel_count==len(tag):
+		# 	if mappability_tag=='':#only if not in associated, then load mappability here
+		# 		mappability_tag, mappability_list=mappability_write(ls[0], bw_map, calc_length)
+		# 	fout_prioritized.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(ls[0],ls[1],ls[2],ls[3],primary_deltapsi, primary_foc, str(differential)+'/'+str(association_panel_len),str(equal)+'/'+str(recurrence_panel_len),str(tissue_specificity)+'/'+str(specificity_panel_len),';'.join(tag),';'.join(mappability_list),mappability_tag))
 
-			pval=[test[t][0] for t in ref_list if t!=out_prefix]
-			deltaPSI=[test[t][1] for t in ref_list if t!=out_prefix]# select deltapsi col of screening result
-			foc=[test[t][2] for t in ref_list if t!=out_prefix]
-			
-			differential,equal,positive,negative,testable,primary_result, primary_result_foc, deltapsi_list,foc_list=summarizeTestResult(filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc,filter2_cutoff_pval, filter2_cutoff_dpsi, filter2_cutoff_foc, filter3_cutoff_pval, filter3_cutoff_dpsi, filter3_cutoff_foc, primary, tumor_rec, pval, deltaPSI, foc, testing_type_index)
-			
-			primary_deltapsi, primary_foc, tissue_specificity, tag = defineTumorEvents(filter1_group_cutoff,filter2_group_cutoff,filter3_group_cutoff, primary, norm_tissue, differential,equal,positive,negative,testable,primary_result, primary_result_foc, deltapsi_list,foc_list,use_ratio)
-
-			if tag!=[]:
-				if tag[0]=='associated':
-					mappability_tag, mappability_list=mappability_write(k, bw_map, calc_length)
-					fout_primary.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(k,query_mean[0],query_mean[1],query_mean[2],primary_deltapsi, primary_foc, str(differential)+'/'+str(primary),str(equal)+'/'+str(tumor_rec),str(tissue_specificity)+'/'+str(norm_tissue),';'.join(tag), ';'.join(mappability_list),mappability_tag))
-
-			if filter_count==len(tag):
-				if mappability_tag=='':#only if not in associated, then load mappability here
-					mappability_tag, mappability_list=mappability_write(k, bw_map, calc_length)
-				fout_prioritized.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(k,query_mean[0],query_mean[1],query_mean[2],primary_deltapsi, primary_foc, str(differential)+'/'+str(primary),str(equal)+'/'+str(tumor_rec),str(tissue_specificity)+'/'+str(norm_tissue),';'.join(tag),';'.join(mappability_list),mappability_tag))
-
-			mappability_tag, mappability_list=['',''] #clear
-		else:
-			exit('[Error] no test performed')
-	fout.close()
-	fout_filtered.close()
+		# mappability_tag, mappability_list=['',''] #clear
 	fout_primary.close()
 	fout_prioritized.close()
 
+	##Translation
 	if args.translating:
-		translationCMD(ref_genome, outdir, out_prefix, 'primary')
-		translationCMD(ref_genome, outdir, out_prefix, 'prioritized')
+
+		translationCMD(ref_genome, gtf, outdir, out_prefix, splicing_event_type, all_orf, ignore_annotation, remove_early_stop, 'tier1')
+		translationCMD(ref_genome, gtf, outdir, out_prefix, splicing_event_type, all_orf, ignore_annotation, remove_early_stop, 'tier2tier3')
 
 if __name__ == '__main__':
 	main()

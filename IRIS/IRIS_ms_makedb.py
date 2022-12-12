@@ -67,6 +67,9 @@ def main(args):
 	outdir=args.outdir.rstrip('/')
 	exp_fin_list=args.exp_fin_list
 	uniprot_fasta=args.uniprot_fasta
+	java_path = args.java_path
+	MSGF_path = args.MSGF_path
+	
 	print '##Creating ProteoTransicritomic Ref'
 	makeProteoTranscriptomeRef(exp_fin_list, uniprot_fasta, outdir)
 
@@ -91,7 +94,7 @@ def main(args):
 	print cmd1
 	os.system(cmd1)
 
-	cmd2='/u/local/apps/java/jdk1.8.0_111/bin/java -Xmx8g -cp ~/MSGFPlus/MSGFPlus.jar edu.ucsd.msjava.msdbsearch.BuildSA -d '+outdir+'/tmp/proteome_ref_combined.fa'
+	cmd2=java_path+' -Xmx8g -cp '+MSGF_path+' edu.ucsd.msjava.msdbsearch.BuildSA -d '+outdir+'/tmp/proteome_ref_combined.fa'
 	print '##Indexing the proteotranscriptomic db'
 	print cmd2
 	os.system(cmd2)

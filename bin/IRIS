@@ -19,15 +19,15 @@ def main():
 	
 	subcommand = args.subcommand
 	
-	if subcommand == 'formatting':
+	if subcommand == 'format':
 		from IRIS import IRIS_formatting
 		IRIS_formatting.main(args)
 		
-	elif subcommand == 'screening':
+	elif subcommand == 'screen':
 		from IRIS import IRIS_screening
 		IRIS_screening.main(args)
 	
-	elif subcommand == 'prediction':
+	elif subcommand == 'predict':
 		from IRIS import IRIS_prediction
 		IRIS_prediction.main( args )
 
@@ -39,19 +39,39 @@ def main():
 		from IRIS import IRIS_process_rnaseq
 		IRIS_process_rnaseq.main(args)
 
-	elif subcommand == 'makeqsub_rmats':
-		from IRIS import IRIS_makeqsub_rmats
-		IRIS_makeqsub_rmats.main(args)
+	elif subcommand == 'makesubsh_mapping':
+		from IRIS import IRIS_makesubsh_mapping
+		IRIS_makesubsh_mapping.main(args)
+
+	elif subcommand == 'makesubsh_rmats':
+		from IRIS import IRIS_makesubsh_rmats
+		IRIS_makesubsh_rmats.main(args)
+	
+	elif subcommand == 'makesubsh_rmatspost':
+		from IRIS import IRIS_makesubsh_rmatspost
+		IRIS_makesubsh_rmatspost.main(args)
 
 	elif subcommand == 'exp_matrix':
 		from IRIS import IRIS_exp_matrix
 		IRIS_exp_matrix.main(args)
+
+        elif subcommand == 'makesubsh_extract_sjc':
+                from IRIS import IRIS_makesubsh_extractsj
+                IRIS_makesubsh_extractsj.main(args)
+
+        elif subcommand == 'extract_sjc':
+                from IRIS import IRIS_extract_sjc
+                IRIS_extract_sjc.main(args)
+
+        elif subcommand == 'sjc_matrix':
+                from IRIS import IRIS_sjc_matrix
+                IRIS_sjc_matrix.main(args)
 	
-	elif subcommand == 'indexing':
+	elif subcommand == 'index':
 		from IRIS import IRIS_indexing
 		IRIS_indexing.main(args)
 
-	elif subcommand == 'translation':
+	elif subcommand == 'translate':
 		from IRIS import IRIS_translation
 		IRIS_translation.main(args)
 
@@ -59,13 +79,41 @@ def main():
 		from IRIS import IRIS_pep2epitope
 		IRIS_pep2epitope.main(args)	
 
-	elif subcommand == 'screening_plot':
+	elif subcommand == 'screen_plot':
 		from IRIS import IRIS_screening_plot
 		IRIS_screening_plot.main(args)	
 
-	elif subcommand == 'seq2hla':
-		from IRIS import IRIS_seq2hla
-		IRIS_seq2hla.main(args)	
+	elif subcommand == 'screen_sjc':
+		from IRIS import IRIS_screening_sjc
+		IRIS_screening_sjc.main(args)
+
+ 	elif subcommand == 'append_sjc':
+                from IRIS import IRIS_append_sjc
+                IRIS_append_sjc.main(args)
+	
+	elif subcommand == 'annotate_ijc':
+                from IRIS import IRIS_annotate_ijc
+                IRIS_annotate_ijc.main(args)
+
+	elif subcommand == 'screen_cpm':
+		from IRIS import IRIS_screening_cpm
+		IRIS_screening_cpm.main(args)
+	
+	elif subcommand == 'append_cpm':
+                from IRIS import IRIS_append_cpm
+                IRIS_append_cpm.main(args)
+
+	elif subcommand == 'screen_novelss':
+		from IRIS import IRIS_screening_novelss
+		IRIS_screening_novelss.main(args)
+
+	elif subcommand == 'screen_sjc_plot':
+		from IRIS import IRIS_screening_sjcplot
+		IRIS_screening_sjcplot.main(args)	
+
+	elif subcommand == 'makesubsh_hla':
+		from IRIS import IRIS_makesubsh_hla
+		IRIS_makesubsh_hla.main(args)	
 
 	elif subcommand == 'parse_hla':
 		from IRIS import IRIS_parse_hla
@@ -82,6 +130,10 @@ def main():
 	elif subcommand == 'ms_parse':
 		from IRIS import IRIS_ms_parse
 		IRIS_ms_parse.main(args)
+
+	elif subcommand == 'visual_summary':
+		from IRIS import IRIS_visual_summary
+		IRIS_visual_summary.main(args)
 
 def get_arg_parser():
 	"""DOCSTRING
@@ -102,56 +154,86 @@ def get_arg_parser():
 	add_prediction_parser(subparsers)
 	add_epitope_post_parser(subparsers)
 	add_process_rnaseq_parser(subparsers)
-	add_rmats_prep_parser(subparsers)
+	add_makesubsh_mapping_parser(subparsers)
+	add_makesubsh_rmats_parser(subparsers)
+	add_makesubsh_rmatspost_parser(subparsers)
 	add_exp_matrix_parser(subparsers)
+	add_makesubsh_extractsj(subparsers)
+	add_extract_sjc(subparsers)
+	add_sjc_matrix(subparsers)
 	add_indexing_parser(subparsers)
 	add_translation_parser(subparsers)
 	add_pep2epitope_parser(subparsers)
 	add_screening_plot_parser(subparsers)
-	add_seq2hla_parser(subparsers)
+	add_screening_sjc_parser(subparsers)
+	add_append_sjc_parser(subparsers)
+	add_annotate_ijc_parser(subparsers)
+	add_screening_cpm_parser(subparsers)	
+	add_append_cpm_parser(subparsers)
+	add_screening_novelss_parser(subparsers)
+	add_screening_sjcplot_parser(subparsers)
+	add_makesubsh_hla_parser(subparsers)
 	add_parse_hla_parser(subparsers)
 	add_ms_makedb_parser(subparsers)
 	add_ms_search_parser(subparsers)
 	add_ms_parse_parser(subparsers)
+	add_visual_summary_parser(subparsers)
 	return argparser
 
 
 def add_formatting_parser( subparsers ):
-	arg_formatting = subparsers.add_parser("formatting", help="Formats AS matrices from rMATS, followed by indexing for IRIS")
+	arg_formatting = subparsers.add_parser("format", help="Formats AS matrices from rMATS, followed by indexing for IRIS")
 	optional_args = arg_formatting._action_groups.pop()
 	required_args = arg_formatting.add_argument_group('required arguments')
-	required_args.add_argument('rmats_mat_path_manifest', help='A txt manifest of path(s) to rMATS output folder(s).')
-	required_args.add_argument('rmats_sample_order', help='A txt manifest of corresponding rMATS input sample order file(s), which is an required input for rMATS.')
-	required_args.add_argument('-t','--splicing_event_type', choices=['SE','RI','A3','A5'],help='A string of splicing event type based on rMATS defination (SE,RI,A3,A5). Will be used to name the output file name.', required=True)
-	required_args.add_argument('-n', '--data-name',  help='Name of the dataset (disease state, study name, group name etc.). This will be also used during IRIS screening.', required=True)
-	required_args.add_argument('-s', '--sample-name-field',type=int, choices=[1, 2], help='Specify a field as the sample name field for each sample in the sample order file(s) listed by "rmats_sample_order". 1- use the BAM file name,2- use the BAM folder name. ', required=True)
-	optional_args.add_argument('-c', '--cov-cutoff', default=10, type=float, help='Average coverage filter for the merged matrix. Defualt is 10.')
-	optional_args.add_argument('-e', '--merge-events-only', default=False, action="store_true" ,help='Will not perform the matrix merge, only merge the events list.')
-	optional_args.add_argument('-d', '--iris-db-path', default='.', help='The path to the IRIS database. The formatted/indexed AS matrices will be added to db and used for IRIS screening. Output to "." when the path is not specified.')
+	required_args.add_argument('rmats_mat_path_manifest', help='txt manifest of path(s) to rMATS output folder(s)')
+	required_args.add_argument('rmats_sample_order', help='TXT file manifest of corresponding rMATS input sample order file(s). Required input for rMATS')
+	required_args.add_argument('-t','--splicing-event-type', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file', required=True)
+	required_args.add_argument('-n', '--data-name',  help='Defines dataset name (disease state, study name, group name etc.). Used during IRIS screening ', required=True)
+	required_args.add_argument('-s', '--sample-name-field',type=int, choices=[1, 2], help='Specifies sample name field (1- SJ count file name, 2- SJ count folder name), for each sample the name should match their name in "rmats_sample_order"', required=True)
+	optional_args.add_argument('-c', '--cov-cutoff', default=10, type=float, help='Average coverage filter for merged matrix (Default is 10)')
+	optional_args.add_argument('-i', '--sample-based-filter', default=False, action="store_true" ,help='Coverage filter by individual sample not by entire input group. (Default is disabled)')
+	optional_args.add_argument('-e', '--merge-events-only', default=False, action="store_true" ,help='Do not perform matrix merge, only merge events list')
+	optional_args.add_argument('-d', '--iris-db-path', default='.', help='Path to store the formatted/indexed AS matrix. Strongly recommend to store the AS matrix to the IRIS db by setting the path to the directory containing folders of pre-index AS reference ("full_path/IRIS_data.vX/db"). Default is current location.')
+	optional_args.add_argument('--novelSS', default=False, action="store_true", help='Enable formatting events with splice junctions containing novelSS. (Different and a subset of rMATS novelSS definition. Default is False)')
+	optional_args.add_argument('--gtf', help='Path to the Genome annotation GTF file. Required input when novelSS is enabled.')
 	arg_formatting._action_groups.append(optional_args)
 	return 
 
 def add_screening_parser( subparsers ):
-	arg_screening = subparsers.add_parser("screening", help="Screens AS-derived tumor antigens using big-data reference")
+	arg_screening = subparsers.add_parser("screen", help="Screens AS-derived tumor antigens using big-data reference")
 	optional_args = arg_screening._action_groups.pop()
 	required_args=arg_screening.add_argument_group('required arguments')
-	required_args.add_argument('parameter_fin', help='A file of IRIS screening parameters.')
-	required_args.add_argument('-o', '--outdir', help='Output directory for IRIS screening.')
-	optional_args.add_argument('-t', '--translating', action= "store_true", help='Translating IRIS screened tumor splice junction into peptides.') 
+	required_args.add_argument('-p', '--parameter-fin', help="File of 'IRIS screen' parameters",required=True)
+	required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')
+	required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)
+	optional_args.add_argument('-t', '--translating', action= "store_true", help='Translates IRIS-screened tumor splice junctions into peptides') 
+	optional_args.add_argument('-g', '--gtf', help='The Genome annotation GTF file. Required by IRIS translate option.') 
+	optional_args.add_argument('--all-orf', default=False, action= "store_true",  help='Perform the 3 ORF translation. ORF known in the UniProtKB will be labeled as uniprotFrame in the bed file (Default is to use the known ORF ONLY)')
+	optional_args.add_argument('--ignore-annotation', default=False, action= "store_true",  help='Perform 3 ORF translation without annotating known ORF from the UniProtKB (Default is disabled)')
+	optional_args.add_argument('--remove-early-stop', default=False, action= "store_true",  help='Discard the peptide if containing early stop codon (Default is keep the truncated peptide)')
+	optional_args.add_argument('--min-sample-count', default=False, help='The minimum number of non-missing sample in the input group for an event to be considered for testing. Once specified, removed events will be written to "notest" file. (Default is no minimum)')
+	optional_args.add_argument('--use-existing-test-result', default=False, action= "store_true",  help='Skip testing and use existing testing result (Default is run full testing steps)')
 	arg_screening._action_groups.append(optional_args)
 	return 
 
 def add_prediction_parser( subparsers ):
-	arg_prediction = subparsers.add_parser("prediction", help="Predicts and annotates AS-derived TCR (pre-prediction) and CAR-T targets")
+	arg_prediction = subparsers.add_parser("predict", help="Predicts and annotates AS-derived TCR (pre-prediction) and CAR-T targets")
 	optional_args = arg_prediction._action_groups.pop()
 	required_args = arg_prediction.add_argument_group('required arguments')
-	required_args.add_argument('IRIS_screening_result_path', help='The same output directory of IRIS screening.')
-	required_args.add_argument('-p','--parameter-fin', help='The parameter file used in IRIS screening.')
-	required_args.add_argument('--iedb-local', help='Specify local IEDB location (Needs to be installed).')
-	optional_args.add_argument('-c','--deltaPSI-column', default=5, help='Column of deltaPSI value in the matrix, 1-based. Default is the 5th column.')
- 	optional_args.add_argument('-d','--deltaPSI-cut-off', default=0, help='Define the cutoff of deltaPSI (or other metric) to be used to select tumor-enriched splice form. Default is 0.')
-	required_args.add_argument('-m','--mhc-list', help='A list of HLA/MHC types among samples. HLA type follows seq2HLA format.',required=True)
-	optional_args.add_argument('--extracellular-anno-by-junction', action="store_true", help='The default is to annotate CAR-T target based on if an event is associated with extracellular domain. This option is to annotate target based on a junction (Not recommanded).' )
+	required_args.add_argument('IRIS_screening_result_path', help='Directory of IRIS screening results')
+	required_args.add_argument('--task-dir', help='Directory to write individual task scripts', required=True)
+	required_args.add_argument('-p','--parameter-fin', help="File of parameters used in 'IRIS screen'",required=True)
+	required_args.add_argument('-t','--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')	
+	optional_args.add_argument('--iedb-local', help='Specify local IEDB location (if installed)')
+	optional_args.add_argument('-m','--mhc-list', help='List of HLA/MHC types among samples. HLA type follows seq2HLA format')
+        optional_args.add_argument('--extracellular-only', default=False, action="store_true", help='Only predict CAR-T Targets. Will not predict HLA binding.')
+	optional_args.add_argument('--tier3-only', default=False, action="store_true", help='To only run predict on events passing all screen tiers, which is the tier3 output. Will be much faster when both the tier1 and tier3 were used.')
+	optional_args.add_argument('--gene-exp-matrix', default=False, help='Tab-delimited matrix of gene expression vs. samples')
+	optional_args.add_argument('-c','--deltaPSI-column', default=5, help='Column of deltaPSI value in matrix, 1-based (Default is 5th column)')
+ 	optional_args.add_argument('-d','--deltaPSI-cut-off', default=0, help='Defines cutoff of deltaPSI (or other metric) to select tumor-enriched splice form (Default is 0)')
+	optional_args.add_argument('-e', '--epitope-len-list', default='9,10,11', help='Epitope length for prediction (Default is 9,10,11)')
+	optional_args.add_argument('--all-orf', default=False, action= "store_true",  help='Perform prediction based on 3 ORF translation peptides. Enable this if translation/screening used this option (Default is False)')
+	optional_args.add_argument('--extracellular-anno-by-junction', action="store_true", help='By default, CAR-T targets are annotated by association of event with extracellular domain. This option annotates target based on a junction (not recommended)' )
 	arg_prediction._action_groups.append(optional_args)
 	return 
 
@@ -159,11 +241,17 @@ def add_epitope_post_parser( subparsers ):
 	arg_epitope_post = subparsers.add_parser("epitope_post", help="Post-prediction step to summarize predicted TCR targets")
 	optional_args = arg_epitope_post._action_groups.pop()
 	required_args = arg_epitope_post.add_argument_group('required arguments')
-	required_args.add_argument('-p','--parameter_fin', help='The parameter file used in IRIS screening.', required=True)
-	required_args.add_argument('-o','--outdir', help='The same output directory of IRIS screening.', required=True)
-	required_args.add_argument('-m','--mhc-by-sample', help='A tsv file of HLA/MHC type vs. samples. HLA type follows seq2HLA format.', required=True)
-	required_args.add_argument('-e','--gene-exp-matrix', default=False, help='A tsv file of gene expression vs. samples.')
-	optional_args.add_argument('--ic50-cut-off', default=500, type=float, help='The IC50 cut-off to define HLA-binding epitopes. default is 500.')
+	required_args.add_argument('-p','--parameter-fin', help='File of parameters used in IRIS screen', required=True)
+	required_args.add_argument('-o','--outdir', help='Directory of IRIS screening results', required=True)
+	required_args.add_argument('-t','--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file (Default is SE event)')
+	required_args.add_argument('-m','--mhc-by-sample', help=' Tab-delimited matrix of HLA/MHC type vs. samples. HLA type follows seq2HLA format', required=True)
+	optional_args.add_argument('-e','--gene-exp-matrix', default=False, help='Tab-delimited matrix of gene expression vs. samples')
+	optional_args.add_argument('--tier3-only', default=False, action="store_true", help='Only predict tier3 events. Will be much faster.')
+	optional_args.add_argument('--keep-exist', default=False, action="store_true", help='Do not rewrite a new postive prediction file when the file existed. Default is False')
+	optional_args.add_argument('--epitope-len-list', default='9,10,11', help='Epitope length for prediction (Default is 9,10,11)')
+	optional_args.add_argument('--no-match-to-canonical-proteome', default=False, action="store_true", help='Matches epitopes to UniProt canonical protein sequences as an annotation.')
+	optional_args.add_argument('--no-uniqueness-annotation', default=False, action="store_true", help='Matches epitopes to all IRIS translated junction peptides in the same analysis as an annotation.')
+	optional_args.add_argument('--ic50-cut-off', default=500, type=float, help='Specifies IC50 cut-off to define HLA-binding epitopes (Default is 500)')
 	arg_epitope_post._action_groups.append(optional_args)
 	return 
 
@@ -172,58 +260,143 @@ def add_process_rnaseq_parser( subparsers ):
 	optional_args = arg_process_rnaseq._action_groups.pop()
 	required_args = arg_process_rnaseq.add_argument_group('required arguments')
 	required_args.add_argument('--starGenomeDir',help='The path to the STAR indexed reference genome.  Pass to the "genomeDir" parameter in STAR', required=True)
-	required_args.add_argument('--gtf',help='Genome annotation file.', required=True)
-	required_args.add_argument('-p','--sampleID-outdir', help='Output directory where sample ID will be used as the output folder name.', required=True)
-	required_args.add_argument('--db-length',default=100, help='Pass to the "sjdbOverhang" parameter in STAR. Default is 100.')
+	required_args.add_argument('--gtf',help='Path to the Genome annotation GTF file', required=True)
+	required_args.add_argument('-p','--sampleID-outdir', help='Output directory where sample ID will be used as the output folder name', required=True)
+	required_args.add_argument('--db-length',default=100, help='Pass to the "sjdbOverhang" parameter in STAR. Default is 100')
 	required_args.add_argument('readsFilesRNA',help='Specify the path to the paired-end FASTQ files for the sample. Files are seperated eperated by ",".')
-	optional_args.add_argument('--mapping',help= 'Only perform reads mapping.', action='store_true')
+	optional_args.add_argument('--mapping',help= 'Only perform reads mapping', action='store_true')
 	optional_args.add_argument('--quant',help='Only perform gene expression and AS quantification', action='store_true')
-	optional_args.add_argument('--sort',help='Only perform BAM file sorting.',action='store_true')
+	optional_args.add_argument('--sort',help='Only perform BAM file sorting',action='store_true')
 	arg_process_rnaseq._action_groups.append(optional_args)	
 	return
 
-def add_rmats_prep_parser(subparsers):
-	arg_rmats_prep = subparsers.add_parser("makeqsub_rmats", help="Makes qsub files for running rMATS-turbo 'prep' step")
-	optional_args = arg_rmats_prep._action_groups.pop()
-	required_args = arg_rmats_prep.add_argument_group('required arguments')
-	required_args.add_argument('--rMATS-path',help= 'Path to rMATS-turbo script.', required=True)
+def add_makesubsh_mapping_parser(subparsers):
+	arg_makesubsh_mapping = subparsers.add_parser("makesubsh_mapping", help="Makes submission shell scripts for running 'process_rnaseq'")
+	optional_args = arg_makesubsh_mapping._action_groups.pop()
+	required_args = arg_makesubsh_mapping.add_argument_group('required arguments')
+	required_args.add_argument('--fastq-folder-dir',help='Specify the path to the higher level of all folders containing FASTQ files')
+	required_args.add_argument('--starGenomeDir',help='The path to the STAR indexed reference genome.  Pass to the "genomeDir" parameter in STAR', required=True)
+	required_args.add_argument('--gtf',help='Path to the Genome annotation GTF file', required=True)
+	required_args.add_argument('--data-name',help='Data set name used to name submission shell scripts files.', required=True)
+	required_args.add_argument('--outdir',help='Output directory for folders of aligned BAM files', required=True)
+	required_args.add_argument('--label-string', help='String in the fastq file name between the reads pair number and "fastq/fq". This is used to recognize paired-end reads. e.g. For FASTQ_file_L1_R2.fastq.gz, the label string is the "." between "2" and "fastq".', required=True)
+	required_args.add_argument('--task-dir', help='Directory to write individual task scripts', required=True)
+	arg_makesubsh_mapping._action_groups.append(optional_args)	
+
+def add_makesubsh_rmats_parser(subparsers):
+	arg_makesubsh_rmats = subparsers.add_parser("makesubsh_rmats", help="Makes submission shell scripts for running rMATS-turbo 'prep' step")
+	optional_args = arg_makesubsh_rmats._action_groups.pop()
+	required_args = arg_makesubsh_rmats.add_argument_group('required arguments')
+	required_args.add_argument('--rMATS-path',help= 'Path to the rMATS-turbo script.', required=True)
 	required_args.add_argument('--bam-dir',help='The path one level higher to folders containing BAM file generated by "process_rnaseq".', required=True)
-	required_args.add_argument('--gtf',help='Genome annotation file.', required=True)
-	required_args.add_argument('--read-length',help='Pass to the "readLength" parameter in rMATS-turbo.', required=True)
-	arg_rmats_prep._action_groups.append(optional_args)	
+	required_args.add_argument('--bam-prefix', default='Aligned.sortedByCoord.out', help='BAM file prefix (Default is "Aligned.sortedByCoord.out")')
+	required_args.add_argument('--gtf',help='Path to the Genome annotation GTF file', required=True)
+	required_args.add_argument('--data-name',help='Data set name used to name submission shell scripts', required=True)
+	required_args.add_argument('--task-dir', help='Directory to write individual task scripts', required=True)
+	optional_args.add_argument('--novelSS',default=False, action= "store_true", help='Enable rMATS novelSS option to include novel splice site detected from the RNA-seq data (Default is False)')
+	optional_args.add_argument('--read-length',default=False, help='User defined read length instead of using STAR maaping log file to define automatically.')
+	arg_makesubsh_rmats._action_groups.append(optional_args)	
 	return
 
-def	add_exp_matrix_parser(subparsers):
+def add_makesubsh_rmatspost_parser(subparsers):
+	arg_makesubsh_rmatspost = subparsers.add_parser("makesubsh_rmatspost", help="Makes submission shell scripts for running rMATS-turbo 'post' step")
+	optional_args = arg_makesubsh_rmatspost._action_groups.pop()
+	required_args = arg_makesubsh_rmatspost.add_argument_group('required arguments')
+	required_args.add_argument('--rMATS-path',help= 'Path to the rMATS-turbo scripte', required=True)
+	required_args.add_argument('--bam-dir',help='The path one level higher to folders containing BAM file generated by "process_rnaseq".', required=True)
+	required_args.add_argument('--gtf',help='Path to the Genome annotation GTF file', required=True)
+	required_args.add_argument('--data-name',help='Data set name used to name submission shell scripts', required=True)
+	optional_args.add_argument('--novelSS',default=False, action= "store_true", help='Enable rMATS novelSS option to include novel splice site detected from the RNA-seq data (Default is False)')	
+	required_args.add_argument('--task-dir', help='Directory to write individual task scripts', required=True)
+	arg_makesubsh_rmatspost._action_groups.append(optional_args)	
+	return
+
+def add_exp_matrix_parser(subparsers):
 	arg_exp_matrix = subparsers.add_parser("exp_matrix", help="Makes a merged gene expression matrix from multiple cufflinks results")
 	optional_args = arg_exp_matrix._action_groups.pop()
 	required_args = arg_exp_matrix.add_argument_group('required arguments')
 	required_args.add_argument('gene_exp_file_list', help='A txt manifest of path(s) of cufflinks gene expression output(s).')
-	optional_args.add_argument('--exp-cutoff', default=1, help='Gene expression cut-off based on FPKM. Default is 1.')
+	optional_args.add_argument('--exp-cutoff', default=1, help='Gene expression cut-off based on FPKM (Default is 1)')
 	optional_args.add_argument('-o','--outdir', default='.',help='Output directory for IRIS exp_matrix', required=True)
 	required_args.add_argument('-n', '--data-name',  help='Name of the dataset (disease state, study name, group name etc.).', required=True)
 	arg_exp_matrix._action_groups.append(optional_args)
 	return 	
 
+
+def add_makesubsh_extractsj( subparsers ):
+        arg_makesubsh_extractsj = subparsers.add_parser('makesubsh_extract_sjc',help="Makes submission shell scripts for running 'extract_sjc'")
+        optional_args = arg_makesubsh_extractsj._action_groups.pop()
+        required_args = arg_makesubsh_extractsj.add_argument_group('required arguments')
+        required_args.add_argument('-b','--bam-folder-list', help='Path to a file listing all paths to BAM folders', required=True)
+        required_args.add_argument('-g', '--gtf', help='Path to the Genome annotation GTF file', required=True)
+        required_args.add_argument('-f', '--genome-fasta', help='Path to the reference genome FASTA file', required=True)
+        required_args.add_argument('-n', '--task-name', help='The task name. Used to name the command file and the bash file', required=True)
+        required_args.add_argument('--BAM-prefix', default='Aligned.sortedByCoord.out', help='BAM file prefix', required=True)
+        optional_args.add_argument(
+                '-r','--rmats-used-read-length', default='',
+                help=('if not given, the read length will be parsed from'
+                      ' Log.final.out in the bam folder'))
+        optional_args.add_argument(
+                '--task-dir',
+                help=('the directory to write the command and bash file.'
+                      ' Defaults to the working directory'))
+        arg_makesubsh_extractsj._action_groups.append(optional_args)
+        return 
+
+def add_extract_sjc( subparsers ):
+        arg_extract_sjc = subparsers.add_parser('extract_sjc',help='Extracts SJ counts from STAR-aligned BAM file and annotates SJs with number of uniquely mapped reads that support the splice junction.')
+        optional_args = arg_extract_sjc._action_groups.pop()
+        required_args = arg_extract_sjc.add_argument_group('required arguments')
+        required_args.add_argument('-i','--bam-path', help='Path to BAM files', required=True)
+	required_args.add_argument('-f', '--genome-fasta', help='Path to the reference genome FASTA file', required=True)
+        required_args.add_argument('-g', '--gtf', help='Path to the Genome annotation GTF file', required=True)
+        required_args.add_argument('-a','--minimum-overhang-length-annotated', default=1)
+	required_args.add_argument('-c','--minimum-overhang-length-unannotated-canonical', default=8)
+	required_args.add_argument('-u','--minimum-overhang-length-unannotated-noncanonical', default=10)
+        required_args.add_argument('-o', '--outdir', help='', required=True)
+	optional_args.add_argument('-r','--read-length', help='length of reads to keep when counting junction reads')
+        arg_extract_sjc._action_groups.append(optional_args)
+        return 
+
+def add_sjc_matrix ( subparsers ):
+        arg_sjc_matrix = subparsers.add_parser('sjc_matrix',help='Makes SJ count matrix by merging SJ count files from a specified list of samples. Performs indexing of the merged file.')
+        optional_args = arg_sjc_matrix._action_groups.pop()
+        required_args = arg_sjc_matrix.add_argument_group('required arguments')
+        required_args.add_argument('-i','--file-list-input', help='Path to the file contains a list of SJ count files.', required=True)
+	required_args.add_argument('-n', '--data-name',  help='Defines dataset name (disease state, study name, group name etc.). Used during IRIS screening ', required=True)
+	required_args.add_argument('-s', '--sample-name-field',type=int, choices=[1, 2], help='Specifies sample name field (1- SJ count file name, 2- SJ count folder name), for each sample the name should match their name in "rmats_sample_order"', required=True)
+	optional_args.add_argument('-d', '--iris-db-path', default='.', help='Path to IRIS database. Formatted/indexed AS matrices are stored here and used during IRIS screening')
+        arg_sjc_matrix._action_groups.append(optional_args)
+        return 
+
 def add_indexing_parser( subparsers ):
-	arg_indexing = subparsers.add_parser("indexing", help="Indexes AS matrices for IRIS")
+	arg_indexing = subparsers.add_parser("index", help="Indexes AS matrices for IRIS")
 	optional_args = arg_indexing._action_groups.pop()
 	required_args = arg_indexing.add_argument_group('required arguments')
-	required_args.add_argument('splicing_matrix', help='A tab-delimited matrix of splicing events (row) vs. sample IDs (col).')
-	required_args.add_argument('-n', '--data-name',  help='Name of the dataset (disease state, study name, group name etc.). This will be also used during IRIS screening.', required=True)
-	optional_args.add_argument('-d', '--db-dir', default='.', help='The directory of the IRIS database. The program will create folder inside this directory in order to make IRIS recognize.')
+	required_args.add_argument('splicing_matrix', help='Tab-delimited matrix of splicing events (row) vs. sample IDs (col)')
+	required_args.add_argument('-t','--splicing-event-type', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file', required=True)
+	required_args.add_argument('-n', '--data-name',  help='Name of data matrix (disease state, study name, group name, etc.) being indexed. Used by IRIS during screening', required=True)
+	optional_args.add_argument('-c', '--cov-cutoff', default=10, type=float, help='For the naming purpose, Input average coverage cutoff used when generating the PSI matrix (Default is 10)')
+	optional_args.add_argument('-o', '--outdir', default='.', help='Output directory for IRIS database')
 	arg_indexing._action_groups.append(optional_args)
 	return 
 
 def add_translation_parser( subparsers ):
-	arg_translation = subparsers.add_parser("translation", help="Translates AS junctions into junction peptides")
+	arg_translation = subparsers.add_parser("translate", help="Translates AS junctions into junction peptides")
 	optional_args = arg_translation._action_groups.pop()
 	required_args = arg_translation.add_argument_group('required arguments')
-	required_args.add_argument('as_input', help='A tsv file generated by IRIS screening, containing AS events and deltaPSI value.')
-	required_args.add_argument('-g','--ref-genome', help='The path to the reference genome file (FASTA).', required=True)
-	required_args.add_argument('-o','--outdir', help='Output directory for IRIS translation.',required=True )
-	optional_args.add_argument('-c','--deltaPSI-column', default=5, help='Column of deltaPSI value in the matrix, 1-based. Default is the 5th column.')
- 	optional_args.add_argument('-d','--deltaPSI-cut-off', default=0, help='Cutoff of deltaPSI (or other metric) to be used to select tumor-enriched splice form. Default is 0.')
-	optional_args.add_argument('--no-tumor-form-selection', action= "store_true", help='Splicing junctions derived from both skipping and inclusion forms are translated.')
+	required_args.add_argument('as_input', help='Inputs AS event coordinates and delta PSI values')
+	required_args.add_argument('-g','--ref-genome', help='Specifies reference genome (FASTA format) location', required=True)
+	required_args.add_argument('-t','--splicing-event-type', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file', required=True)
+	required_args.add_argument('--gtf',help='Path to the Genome annotation GTF file. Used to define exon ends for microexons', required=True)
+	required_args.add_argument('-o','--outdir', help='Defines IRIS translation output directory',required=True )
+	optional_args.add_argument('--all-orf', default=False, action= "store_true",  help='Perform the 3 ORF translation. ORF known in the UniProtKB will be labeled as uniprotFrame in the bed file (Default is to use the known ORF ONLY)')
+	optional_args.add_argument('--ignore-annotation', default=False, action= "store_true",  help='Perform 3 ORF translation without annotating known ORF from the UniProtKB (Default is disabled)')
+	optional_args.add_argument('--remove-early-stop', default=False, action= "store_true",  help='Discard the peptide if containing early stop codon (Default is keep the truncated peptide)')
+	optional_args.add_argument('-c','--deltaPSI-column', default=5, help='Column of deltaPSI value in matrix, 1-based (Default is 5th column)')
+ 	optional_args.add_argument('-d','--deltaPSI-cut-off', default=0, help='Defines cutoff of deltaPSI (or other metric) used to select tumor-enriched splice form (Default is 0)')
+	optional_args.add_argument('--no-tumor-form-selection', action= "store_true", help='Translates splicing junctions derived from both skipping and inclusion forms (Default is False)')
+	optional_args.add_argument('--check-novel', action= "store_true", help='Translates splicing junctions derived from novel splice sites only using information passed from screen_novelss (Default is False)', default=False)
 	arg_translation._action_groups.append(optional_args)
 	return 
 
@@ -231,23 +404,25 @@ def add_pep2epitope_parser( subparsers ):
 	arg_pep2epitope = subparsers.add_parser("pep2epitope", help="Wrapper to run IEDB for peptide-HLA binding prediction")
 	optional_args = arg_pep2epitope._action_groups.pop()
 	required_args = arg_pep2epitope.add_argument_group('required arguments')
-	required_args.add_argument('junction_pep_input', help='input alternative splicing events coordinates and PSI value.')
-	required_args.add_argument('-e', '--epitope-len-list', default='9,10,11', help='epitope length for prediction. Default is 9,10,11.')
-	required_args.add_argument('-a', '--hla-allele-list', default='HLA-A*01:01,HLA-B*08:01,HLA-C*07:01', help='a list of HLA types. Default is HLA-A*01:01,HLA-B*08:01,HLA-C*07:01.')
-	required_args.add_argument('-o', '--outdir', help='Define the output directory of pep2epitope.', required=True)
-	required_args.add_argument('--iedb-local', help='Specify local IEDB location if it is installed.')
-	required_args.add_argument('--ic50-cut-off', default=500, help='Cut-off based on median value of concensus predicted IC50 values. Default is 500.')
+	required_args.add_argument('junction_pep_input', help='Inputs junction peptides')
+	required_args.add_argument('-e', '--epitope-len-list', default='9,10,11', help='Epitope length for prediction (Default is 9,10,11)')
+	required_args.add_argument('-a', '--hla-allele-list', default='HLA-A*01:01,HLA-B*08:01,HLA-C*07:01', help='List of HLA types (Default is HLA-A*01:01, HLA-B*08:01, HLA-C*07:01)')
+	required_args.add_argument('-o', '--outdir', help='Define output directory of pep2epitope', required=True)
+	required_args.add_argument('--iedb-local', help='Specify local IEDB location (if installed)')
+	required_args.add_argument('--ic50-cut-off', default=500, help='Cut-off based on median value of consensus-predicted IC50 values (Default is 500)')
 	arg_pep2epitope._action_groups.append(optional_args)
 	return 
 
-def add_seq2hla_parser(subparsers):
-	arg_seq2hla = subparsers.add_parser("seq2hla",help='Wrapper to run seq2HLA for HLA typing using RNA-Seq')
-	optional_args = arg_seq2hla._action_groups.pop()
-	required_args = arg_seq2hla.add_argument_group('required arguments')
-	required_args.add_argument('-b','--seq2hla-path', help='Path to seq2hla folder.', required=True)
-	required_args.add_argument('-p','--sampleID-outdir', help='Output directory where sample ID will be used as the output folder name.', required=True)
-	required_args.add_argument('readsFilesCaseRNA',help='Tumor sample paired-end fastq files seperated by ",". ')
-	arg_seq2hla._action_groups.append(optional_args)
+def add_makesubsh_hla_parser(subparsers):
+	arg_makesubsh_hla = subparsers.add_parser("makesubsh_hla",help='Makes submission shell scripts for running seq2HLA for HLA typing using RNA-Seq')
+	optional_args = arg_makesubsh_hla._action_groups.pop()
+	required_args = arg_makesubsh_hla.add_argument_group('required arguments')
+	required_args.add_argument('--fastq-folder-dir',help='Specify the path to the higher level of all folders containing FASTQ files')
+	required_args.add_argument('--data-name',help='Data set name used to name submission shell scripts.', required=True)
+	required_args.add_argument('-o','--outdir',help='Output directory for folders of seq2hla result', required=True)
+	required_args.add_argument('--label-string', help='String in the fastq file name between the reads pair number and "fastq/fq". This is used to recognize paired-end reads. e.g. For FASTQ_file_L1_R2.fastq.gz, the label string is the "." between "2" and "fastq".', required=True)
+	required_args.add_argument('--task-dir', help='Directory to write individual task scripts', required=True)
+	arg_makesubsh_hla._action_groups.append(optional_args)
 	return
 
 def add_parse_hla_parser(subparsers):
@@ -259,20 +434,124 @@ def add_parse_hla_parser(subparsers):
 	return
 
 def add_screening_plot_parser(subparsers):
-	arg_screening_plot = subparsers.add_parser("screening_plot",help='Makes stacked/individual violin plots for list of AS events')
+	arg_screening_plot = subparsers.add_parser("screen_plot",help='Makes stacked/individual violin plots for list of AS events')
 	optional_args = arg_screening_plot._action_groups.pop()
 	required_args = arg_screening_plot.add_argument_group('required arguments')
-	required_args.add_argument('event_list', help='input alternative splicing events coordinates for visualization.')
-	required_args.add_argument('-p','--parameter-fin', help='The file of parameters used in IRIS screening.', required=True)
-	required_args.add_argument('--step','-s', default=10, help='number of events in each plot.')
-	optional_args.add_argument('--header', action="store_true", help='Skipping the header line in the input event list.')
+	required_args.add_argument('event_list', help='Inputs AS event coordinates for visualization')
+	required_args.add_argument('-p','--parameter-file', help="Parameter file for 'IRIS screen'", required=True)
+	required_args.add_argument('-t', '--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file (Default is SE event)')
+	required_args.add_argument('--step','-s', default=10, help='Number of events in each plot (Default is 10)')
+	required_args.add_argument('-o', '--outdir', help='Define the output directory of the plot.', required=True)
+	optional_args.add_argument('--header', action="store_true", default=False, help='Skipping the header line of the input (Default is False)')
 	arg_screening_plot._action_groups.append(optional_args)
+	return
+
+def add_screening_sjc_parser( subparsers ):
+	arg_screening_sjc = subparsers.add_parser("screen_sjc", help="Screens AS-derived tumor antigens by comparing number of samples expressing a splice junction using big-data reference of SJ counts")
+	optional_args = arg_screening_sjc._action_groups.pop()
+	required_args= arg_screening_sjc.add_argument_group('required arguments')
+	required_args.add_argument('-p','--parameter-file', help='Parameter file containing SJ db directory, selected data sets, etc.', required=True)
+	required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')
+	required_args.add_argument('-e','--event-list-file',  help='AS event list in the format of PSI value matrices (see the output format of IRIS format module or IRIS_db PSI matrices)')
+	required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)
+	optional_args.add_argument('--use-existing-test-result', default=False, action= "store_true",  help='Skip testing and use existing testing result (Default is run full testing steps)')
+	optional_args.add_argument('--tumor-read-cov-cutoff', default=5, type=int, help='Minimum read coverage for a tumor sample to be considered as expressing the junction (Default is 5)')
+	optional_args.add_argument('--normal-read-cov-cutoff', default=2, type=int, help='Minimum read coverage for a normal sample to be considered as expressing the junction (Default is 2)')
+	arg_screening_sjc._action_groups.append(optional_args)
+	return 
+
+def add_append_sjc_parser( subparsers ):
+        arg_append_sjc = subparsers.add_parser("append_sjc", help="Appends SJC result as an annotation to PSI-based screening results and epitope prediction results in a specified screening output folder.")
+        optional_args = arg_append_sjc._action_groups.pop()
+        required_args= arg_append_sjc.add_argument_group('required arguments')
+        required_args.add_argument('--sjc-summary',help='Full path to the \"summary\" file from the SJC screening output',required=True)
+        required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')
+        required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)
+        optional_args.add_argument('-i', '--add-ijc-info', action='store_true', default=False, help='Add inclusion junction related annotation to the PSI-based screening results and epitope prediction results. This can be slow when \'--screening-result-event-list\' is large. (Default is False)')
+	optional_args.add_argument('-u','--use-existing-result', default=False, action= "store_true",  help='Skip retrieving and use existing ijc result (Default is False)')
+	optional_args.add_argument('-p','--parameter-file', help='Parameter file. This is required when \'--add-ijc-info\' is enabled', default='')
+	optional_args.add_argument('-e','--screening-result-event-list',  help='A list of AS events of interest in the same format as the \'as_event\' column in the IRIS screen output. This is required when \'--add-ijc-info\' is enabled', default='')
+	optional_args.add_argument('--inc-read-cov-cutoff', default=2, type=int, help='Minimum read coverage for the two inclusion junctions  combined to be considered as expressing. This is a parameter for annotate_ijc (Default is 2)')
+	optional_args.add_argument('--event-read-cov-cutoff', default=10, type=int, help='Minimum read coverage for an event to be considered in the analysis. This is a parameter for annotate_ijc (Default is 10)')
+	arg_append_sjc._action_groups.append(optional_args)
+        return
+
+def add_annotate_ijc_parser( subparsers ):
+	arg_annotate_ijc = subparsers.add_parser("annotate_ijc", help="Annotates inclusion junction count info to PSI-based screening results or epitope prediction results in a specified screening output folder. Can be called from append sjc to save time.")
+        optional_args = arg_annotate_ijc._action_groups.pop()
+        required_args= arg_annotate_ijc.add_argument_group('required arguments')
+	required_args.add_argument('-p','--parameter-file', help='Parameter file containing SJ db directory, selected data sets, etc.', required=True)
+	required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')        
+	required_args.add_argument('-e','--screening-result-event-list',  help='A list of AS events of interest in the same format as the \'as_event\' column in the IRIS screen output', required=True)
+	optional_args.add_argument('--inc-read-cov-cutoff', default=2, type=int, help='Minimum read coverage for the two inclusion junctions  combined to be considered as expressing (Default is 2)')
+	optional_args.add_argument('--event-read-cov-cutoff', default=10, type=int, help='Minimum read coverage for an event to be considered in the analysis (Default is 10)')
+        required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)
+        arg_annotate_ijc._action_groups.append(optional_args)
+        return
+
+def add_screening_cpm_parser( subparsers ):
+	arg_screening_cpm = subparsers.add_parser("screen_cpm", help="Screens AS-derived tumor antigens by comparing splice junction CPM using big-data reference of SJ counts")
+	optional_args = arg_screening_cpm._action_groups.pop()
+	required_args= arg_screening_cpm.add_argument_group('required arguments')
+	required_args.add_argument('-p','--parameter-file', help='Parameter file containing SJ db directory, selected data sets, etc.', required=True)
+	required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')
+	required_args.add_argument('-e','--event-list-file',  help='AS event list in the format of PSI value matrices (see the output format of IRIS format module or IRIS_db PSI matrices)')
+	required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)
+	optional_args.add_argument('--use-existing-test-result', default=False, action= "store_true",  help='Skip testing and use existing testing result (Default is run full testing steps)')
+	arg_screening_cpm._action_groups.append(optional_args)
+	return
+
+def add_append_cpm_parser( subparsers ):
+        arg_append_cpm = subparsers.add_parser("append_cpm", help="Appends CPM result as an annotation to PSI-based screening results and epitope prediction results in a specified screening output folder.")
+        optional_args = arg_append_cpm._action_groups.pop()
+        required_args= arg_append_cpm.add_argument_group('required arguments')
+        required_args.add_argument('--cpm-summary',help='Full path to the \"summary\" file from the CPM screening output',required=True)
+        required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')
+        required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)
+	arg_append_cpm._action_groups.append(optional_args)
+        return
+
+def add_screening_novelss_parser( subparsers ):
+	arg_screening_novelss = subparsers.add_parser("screen_novelss", help="Screens AS-derived tumor antigens for unannotated events using big-data reference of SJ counts")
+	optional_args = arg_screening_novelss._action_groups.pop()
+	required_args= arg_screening_novelss.add_argument_group('required arguments')
+	required_args.add_argument('-p','--parameter-fin', help='Parameter file containing SJ db directory, selected data sets, etc.', required=True)
+	required_args.add_argument('--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file. (Default is SE event)')
+	required_args.add_argument('-e','--event-list-fin',  help='AS Event list in the format of PSI value matrices (modifed rMATS format)')
+	required_args.add_argument('-o', '--outdir', help='Directory of IRIS screening results', required= True)	
+	optional_args.add_argument('--gtf', help='Path to the Genome annotation GTF file. Required input when checking novelSS for tumor junctions and IRIS translate option.')
+	optional_args.add_argument('-d','--deltaPSI-cut-off', default=0, help='Defines cutoff of deltaPSI (or other metric) used to select tumor-enriched splice form (Default is 0)')
+	optional_args.add_argument('--use-existing-test-result', default=False, action= "store_true",  help='Skip testing and use existing testing result (Default is run full testing steps)')
+	optional_args.add_argument('-t', '--translating', action= "store_true", help='Translates IRIS-screened tumor splice junctions into peptides')
+	optional_args.add_argument('--report-known-and-novelss-tumor-junction', default=False, action= "store_true", help='Report both known and novel splice site-derived tumor junctions. Despite the input is AS events from rMATS with novel splice sites detected, not every junctions in an AS event will contain novel splice site(s). By default, an event will be reported when tumor-form junction derived from novel splice site(s). (Default is False)')
+	optional_args.add_argument('--all-orf', default=False, action= "store_true",  help='Perform the 3 ORF translation. ORF known in the UniProtKB will be labeled as uniprotFrame in the bed file (Default is to use the known ORF ONLY)')
+	optional_args.add_argument('--ignore-annotation', default=False, action= "store_true",  help='Perform 3 ORF translation without annotating known ORF from the UniProtKB (Default is disabled)')
+	optional_args.add_argument('--remove-early-stop', default=False, action= "store_true",  help='Discard the peptide if containing early stop codon (Default is keep the truncated peptide)')
+	arg_screening_novelss._action_groups.append(optional_args)
+	return 
+
+def add_screening_sjcplot_parser( subparsers ):
+	arg_screening_sjcplot = subparsers.add_parser("screen_sjc_plot",help='Makes stacked/individual barplots of percentage of samples expressing a splice junction for list of AS events')
+	optional_args = arg_screening_sjcplot._action_groups.pop()
+	required_args = arg_screening_sjcplot.add_argument_group('required arguments')
+	required_args.add_argument('event_list', help='Inputs a list of AS event and direction for visualization. IRIS screening result format is preferred (Default deltaPSI column and cutoff are based on IRIS screening format)')
+	required_args.add_argument('-j','--jc-full-result', help='File contains information about percentage of samples expressing a SJ from the output of IRIS SJC screening.')
+	required_args.add_argument('-p','--parameter-fin', help="Parameter file used in 'IRIS screen_sjc' (using SJ db)", required=True)
+	required_args.add_argument('-t', '--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'],help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file (Default is SE event)')
+	required_args.add_argument('--step','-s', default=10, help='Number of events in each plot (Default is 10)')
+	required_args.add_argument('-o', '--outdir', help='Define the output directory of the plot.', required=True)
+	optional_args.add_argument('-c','--deltaPSI-column', default=5, help='Column of deltaPSI value in matrix, 1-based (Default is 5th column)')
+ 	optional_args.add_argument('-d','--deltaPSI-cut-off', default=0, help='Defines cutoff of deltaPSI (or other metric) to select tumor-enriched splice form (Default is 0)')
+	optional_args.add_argument('--header', action="store_true", default=False, help='Skipping the header line of the input (Default is False)')
+	arg_screening_sjcplot._action_groups.append(optional_args)
 	return
 
 def add_ms_makedb_parser(subparsers):
 	arg_ms_makedb = subparsers.add_parser("ms_makedb",help='Generates proteo-transcriptomic database for MS search')
 	optional_args = arg_ms_makedb._action_groups.pop()
 	required_args = arg_ms_makedb.add_argument_group('required arguments')
+	required_args.add_argument('--java-path', help='The path of Java.')
+	required_args.add_argument('--MSGF-path', help='The path of MSGF+.')
 	required_args.add_argument('-o', '--outdir', help='The path to IRIS traslation output directory.', required=True)
 	required_args.add_argument('--uniprot-fasta',help='Specify the path of the UniProt proteome FASTA file.', required= True)
 	required_args.add_argument('--exp-fin-list',help='Specify a file contains paths of gene expression files (by rows) that should be considered to form the proteogenomic db.', required= True)
@@ -301,7 +580,19 @@ def add_ms_parse_parser(subparsers):
 	required_args.add_argument('-o', '--outdir', help='Specify a directory to output parsed MS result.', required=True)
 	optional_args.add_argument('--dump-all', action= "store_true", help='')
 	arg_ms_parse._action_groups.append(optional_args)
-	return	
+	return
+
+def add_visual_summary_parser(subparsers):
+	arg_visual_summary = subparsers.add_parser("visual_summary",help='Makes a graphic summary of IRIS results')
+	optional_args = arg_visual_summary._action_groups.pop()
+	required_args = arg_visual_summary.add_argument_group('required arguments')
+	required_args.add_argument('-p','--parameter-fin', help="Parameter file used in 'IRIS screen'", required=True)
+	required_args.add_argument('-s', '--screening-out-dir', help='The directory where IRIS screening output was written', required=True)
+	required_args.add_argument('-o', '--out-file-name', help='The .png file name to write', required=True)
+	required_args.add_argument('-t', '--splicing-event-type',  default='SE', choices=['SE','RI','A3SS','A5SS'], help='String of splicing event types based on rMATS definition (SE,RI,A3SS,A5SS).Used to name output file (Default is SE event)')
+	optional_args.add_argument('--no-prediction', action='store_true', required=False)
+	arg_visual_summary._action_groups.append(optional_args)
+	return
 
 if __name__ == '__main__':
 	try:

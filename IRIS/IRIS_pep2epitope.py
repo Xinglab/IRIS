@@ -3,22 +3,11 @@ import sys, argparse, os ,datetime,logging, uuid
 #import multiprocessing as mp
 # from Bio.Blast import NCBIXML
 from subprocess import Popen, PIPE
-#now = datetime.datetime.now()
+
 ID = str(uuid.uuid4()).split('-')[0]
 
 def loadSampleMHC(f_s_in):
-	# if f_s_in.find(',')!=-1:
 	hla_allele_list=f_s_in.split(',')
-	# else:
-	# 	n=0
-	# 	hla_allele_list=[]
-	# 	for l in open(f_s_in):
-	# 		if n==0:
-	# 			n+=1
-	# 			continue
-	# 		ls=l.strip().split('\t')
-	# 		hla_allele_list.append('HLA-'+ls[1].strip("'"))
-	# 		hla_allele_list.append('HLA-'+ls[3].strip("'"))
 	return hla_allele_list
 
 def parsePred(stdout):
@@ -40,7 +29,7 @@ def localIEDBCommand(iedb_path, hla_allele, epitope_len, outdir, JC_pep_fasta, e
 	response = Popen(['python',iedb_path+'/predict_binding.py',IEDB_model,hla_allele,epitope_len,outdir+'/tmp/prot.compared/'+form+'/'+form+'.'+JC_pep_fasta], stdout=fout,shell = False)
 	#response = Popen(['/u/home/p/panyang/local/bin/python',iedb_path+'/predict_binding.py',IEDB_model,hla_allele,epitope_len,outdir+'/tmp/prot.compared/'+form+'/'+form+'.'+JC_pep_fasta], stdout=fout,shell = False)
 	fout.close()
-	
+	return response
 
 def pep2antigen(JC_pep_fasta, enst_id, hla_allele_list,epitope_len_list, iedb_path, outdir):
 	predicting=[]
@@ -58,14 +47,13 @@ def pep2antigen(JC_pep_fasta, enst_id, hla_allele_list,epitope_len_list, iedb_pa
 	#return parsed_dict
 def pep2antigen_single(JC_pep_fasta, enst_id, form, hla_allele_list,epitope_len_list, iedb_path, outdir):
 	predicting=[]
-	n=0
-	#file_list=[]
 	for hla_allele in hla_allele_list:
 		for epitope_len in epitope_len_list:
-			#file_list.append(outdir+'/tmp/'+JC_pep_fasta+' '+hla_allele.replace('*','_').replace(':','_')+'.'+epitope_len+'_iedb.txt')
-			localIEDBCommand(iedb_path, hla_allele, epitope_len, outdir, JC_pep_fasta, enst_id, form)
-	#parsed_dict=[parsePred(open(tmp_file)) for tmp_file in file_list]
-	#return parsed_dict
+			response = localIEDBCommand(iedb_path, hla_allele, epitope_len, outdir, JC_pep_fasta, enst_id, form)
+			predicting.append(response)
+
+	for response in predicting:
+		response.wait()
 
 
 def main(args):
@@ -79,9 +67,10 @@ def main(args):
 	hla_allele_list=loadSampleMHC(args.hla_allele_list)
 	if hla_allele_list==[]:
 		sys.exit("# No HLA Alleles. Exit.")
-	epitope_len_list=args.epitope_len_list.split(',')
+	epitope_len_list=map(int,args.epitope_len_list.split(','))
 	if min(epitope_len_list)<8:
 		sys.exit("# The request epitope length is too small. Exit.")
+	epitope_len_list=map(str,epitope_len_list)
 
 	fs=fin.split('/')[-1].split('.')
 	JC_pep_fasta='.'.join(fs[1:])

@@ -10,7 +10,7 @@ import os, sys
 #import yaml
 
 
-CURRENT_VERSION = "v1.0"
+CURRENT_VERSION = "v2.0.0"
 
 
 def update_progress(progress):
@@ -40,21 +40,11 @@ def file_len(fin):
 
 
 # For screening and translation
-BRAIN_BLACKLIST_PATH = resource_filename('IRIS.data','brain_blacklistMay.txt')
+BRAIN_BLACKLIST_PATH = resource_filename('IRIS.data','blacklist.brain_2020.txt')
 ORF_MAP_PATH = resource_filename('IRIS.data','uniprot2gtf.blastout.uniprotAll.txt')
 
 ## For TCR mapping
 EXTRACELLULAR_FEATURES_UNIPROT2GTF_MAP_PATH =  resource_filename('IRIS.data','features.uniprot2gtf.ExtraCell.txt')
-
-# ## For HLA typing
-# SEQ2HLA_PATH = resource_filename('IRIS.utilities.seq2hla', 'seq2HLA.py')
-# FOURDIGITS_PATH = resource_filename('IRIS.utilities.seq2hla', 'fourdigits.py')
-
-## For qsub
-QSUB_PREDICTION_CONFIG='h_data=15G,h_rt=5:00:00'
-QSUB_ALIGNMENT_CONFIG='h_data=38G,h_rt=4:30:00'
-QSUB_EXPRESSION_CONFIG='h_data=8G,h_rt=14:00:00'
-QSUB_RMATS_PREP_CONFIG='h_data=4G,h_rt=5:00:00'
 
 ## For proteogenomics
 UNIPROT_ENSG_ID_MAP_PATH = resource_filename('IRIS.data','UniprotENSGmap.txt')

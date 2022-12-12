@@ -2,23 +2,21 @@
 #
 # Install dependencies
 #
-# ** Must manually install conda first. **
-# This script will create two conda environments (Python 2 and 3)
-# and install dependencies to them.
-# https://docs.conda.io/en/latest/miniconda.html
-# https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh
-#
-# ** Must manually download the IRIS_data set **
-# https://drive.google.com/file/d/1TaswpWPnEd4TXst46jsa9XSMzLsbzjOQ/view?usp=sharing
-#
-# ** Must manually download IEDB tools version 2.15.5 to the IEDB directory. **
-# download file to IEDB/IEDB_MHC_I-2.15.5.tar.gz
-# This script will unpack and install the IEDB tools.
-# http://tools.iedb.org/main/download/ -> MHC Class I -> previous version -> 2.15.5
-
 function install_iedb() {
   echo
   echo "checking IEDB dependency"
+
+  # From IEDB/mhc_i/README: tcsh and gawk are required
+  which tcsh
+  if [[ "$?" -ne 0 ]]; then
+    echo "IEDB requires tcsh to be installed" >&2
+    return 1
+  fi
+  which gawk
+  if [[ "$?" -ne 0 ]]; then
+    echo "IEDB requires gawk to be installed" >&2
+    return 1
+  fi
 
   cd "${SCRIPT_DIR}/IEDB" || return 1
 
@@ -29,156 +27,17 @@ function install_iedb() {
 
   cd mhc_i || return 1
 
-  ./configure || return 1
-}
-
-# This script will automatically download and build bedtools
-# https://github.com/arq5x/bedtools2/releases
-function install_bedtools() {
-  echo
-  echo "checking bedtools dependency"
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  if [[ ! -d bedtools ]]
-  then
-    mkdir bedtools || return 1
-  fi
-
-  cd bedtools || return 1
-
-  if [[ ! -f bedtools-2.29.0.tar.gz ]]
-  then
-    local BEDTOOLS_URI="https://github.com/arq5x/bedtools2/releases/download/v2.29.0/bedtools-2.29.0.tar.gz"
-    curl -L "${BEDTOOLS_URI}" -o bedtools-2.29.0.tar.gz || return 1
-  fi
-
-  if [[ ! -d bedtools2 ]]
-  then
-    tar -xvf bedtools-2.29.0.tar.gz || return 1
-  fi
-
-  cd bedtools2 || return 1
-  make || return 1
-}
-
-function install_star() {
-  echo
-  echo "checking STAR dependency"
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  if [[ ! -d STAR ]]
-  then
-    mkdir STAR || return 1
-  fi
-
-  cd STAR || return 1
-
-  if [[ ! -f 2.5.3a.tar.gz ]]
-  then
-    local STAR_URI="https://github.com/alexdobin/STAR/archive/2.5.3a.tar.gz"
-    curl -L "${STAR_URI}" -o 2.5.3a.tar.gz || return 1
-  fi
-
-  if [[ ! -d STAR-2.5.3a ]]
-  then
-    tar -xvf 2.5.3a.tar.gz || return 1
-  fi
-
-  cd STAR-2.5.3a/source || return 1
-  make || return 1
-}
-
-function install_samtools() {
-  echo
-  echo "checking SAM tools dependency"
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  if [[ ! -d samtools ]]
-  then
-    mkdir samtools || return 1
-  fi
-
-  cd samtools || return 1
-
-  if [[ ! -f samtools-1.3.tar.bz2 ]]
-  then
-    local SAMTOOLS_URI="https://sourceforge.net/projects/samtools/files/samtools/1.3/samtools-1.3.tar.bz2/download"
-    curl -L "${SAMTOOLS_URI}" -o samtools-1.3.tar.bz2 || return 1
-  fi
-
-  if [[ ! -d samtools-1.3 ]]
-  then
-    tar -xvf samtools-1.3.tar.bz2 || return 1
-  fi
-
-  cd samtools-1.3 || return 1
-  ./configure --enable-plugins --enable-libcurl --with-plugin-path="$(pwd)"/htslib-1.3 || return 1
-  make all plugins-htslib || return 1
-}
-
-function install_rmats() {
-  echo
-  echo "checking rMATS dependency"
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  if [[ ! -d rMATS ]]
-  then
-    mkdir rMATS || return 1
-  fi
-
-  cd rMATS || return 1
-
-  if [[ ! -f rMATS.4.0.2.tgz ]]
-  then
-    local RMATS_URI="https://sourceforge.net/projects/rnaseq-mats/files/MATS/rMATS.4.0.2.tgz/download"
-    curl -L "${RMATS_URI}" -o rMATS.4.0.2.tgz || return 1
-  fi
-
-  if [[ ! -d rMATS.4.0.2 ]]
-  then
-    tar -xvf rMATS.4.0.2.tgz || return 1
-  fi
-}
-
-function install_cufflinks() {
-  echo
-  echo "checking Cufflinks dependency"
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  if [[ ! -d cufflinks ]]
-  then
-    mkdir cufflinks || return 1
-  fi
-
-  cd cufflinks || return 1
-
-  if [[ ! -f cufflinks-2.2.1.Linux_x86_64.tar.gz ]]
-  then
-    local CUFFLINKS_URI="http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cufflinks-2.2.1.Linux_x86_64.tar.gz"
-    curl "${CUFFLINKS_URI}" -o cufflinks-2.2.1.Linux_x86_64.tar.gz || return 1
-  fi
-
-  if [[ ! -d cufflinks-2.2.1.Linux_x86_64 ]]
-  then
-    tar -xvf cufflinks-2.2.1.Linux_x86_64.tar.gz || return 1
-  fi
-}
-
-function install_seq2hla() {
-  echo
-  echo "checking seq2HLA dependency"
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  if [[ ! -d seq2hla ]]
-  then
-    local SEQ_2_HLA_URI="https://bitbucket.org/sebastian_boegel/seq2hla"
-    hg clone "${SEQ_2_HLA_URI}" || return 1
+  # The IEDB ./configure script unpacks .tar files which can take a long time.
+  # Create a .done file to indicate that ./configure has already been run.
+  # Only run ./configure if there's no .done file
+  local DONE_FILE='configure.done'
+  if [[ ! -f "${DONE_FILE}" ]]; then
+    # Need to activate Python 2 environment so that '/usr/bin/env python' used in
+    #   ./configure finds python 2. Otherwise there is a syntax error.
+    conda activate "${CONDA_ENV_PREFIX_2}" || return 1
+    ./configure || return 1
+    conda deactivate || return 1
+    touch "${DONE_FILE}" || return 1
   fi
 }
 
@@ -208,24 +67,74 @@ function install_ms_gf() {
 }
 
 function install_python_packages() {
+  local INSTALL_OPTIONAL="$1"
   echo
   echo "checking python dependencies"
 
   cd "${SCRIPT_DIR}" || return 1
 
+  # rmats is an optional dependency.
+  # Record the path if it is installed.
+  local RMATS_PATH=''
+
   # Python 2
-  conda::activate_env "${CONDA_ENV_NAME_2}" || return 1
-  pip install -r requirements.txt || return 1
-  conda install -c bioconda bowtie # has an error return even when successful
-  conda::deactivate_env || return 1
+  conda activate "${CONDA_ENV_PREFIX_2}" || return 1
+  if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
+    conda install -c conda-forge -c bioconda --file conda_requirements_py2.txt \
+          --file conda_requirements_py2_optional.txt || return 1
+    # r-base is an optional dependency which requires an old version of libreadline.
+    # The version of libreadline is not available on conda, but it can be installed manually.
+    install_readline || return 1
+    # Find the rmats path needed to pass as --rMATS-path to IRIS
+    RMATS_PATH="$(which rmats.py)"
+    if [[ "$?" -ne 0 ]]; then
+      echo "could not find path to rmats.py" >&2
+      exit 1
+    fi
+  else
+    conda install -c conda-forge -c bioconda --file conda_requirements_py2.txt || return 1
+  fi
+
+  # rmats_path will be '' if optional dependencies were not installed
+  echo "rmats_path: '${RMATS_PATH}'" \
+       >> "${SCRIPT_DIR}/snakemake_config.yaml" || return 1
+
+  conda deactivate || return 1
 
   # Python 3
-  conda::activate_env "${CONDA_ENV_NAME_3}" || return 1
-  pip install -r qsub/requirements.txt || return 1
-  conda::deactivate_env || return 1
+  conda activate "${CONDA_ENV_PREFIX_3}" || return 1
+  conda install -c conda-forge -c bioconda --file conda_requirements_py3.txt || return 1
+  conda deactivate || return 1
 }
 
-function install_iris_data() {
+function install_readline() {
+  local ORIG_DIR="$(pwd)" || return 1
+  cd "${SCRIPT_DIR}" || return 1
+  mkdir -p readline || return 1
+  cd readline || return 1
+  local TAR_PATH='readline-6.3.tar.gz'
+  local TAR_URL='ftp://ftp.gnu.org/gnu/readline/readline-6.3.tar.gz'
+  if [[ ! -f "${TAR_PATH}" ]]; then
+    curl "${TAR_URL}" -o "${TAR_PATH}" || return 1
+  fi
+
+  if [[ ! -f 'readline-6.3/configure' ]]; then
+    tar -xvf "${TAR_PATH}" || return 1
+  fi
+
+  cd readline-6.3 || return 1
+  local SO_PATH='shlib/libreadline.so.6.3'
+  if [[ ! -f "${SO_PATH}" ]]; then
+    ./configure || return 1
+    make || return 1
+  fi
+
+  local DEST="${CONDA_ENV_PREFIX_2}/lib/libreadline.so.6"
+  cp "${SO_PATH}" "${DEST}" || return 1
+  cd "${ORIG_DIR}"
+}
+
+function check_iris_data() {
   echo
   echo "checking IRIS data dependency"
 
@@ -233,13 +142,7 @@ function install_iris_data() {
 
   if [[ ! -d IRIS_data ]]
   then
-    if [[ ! -f IRIS_data.tgz ]]; then
-      echo "Need to download IRIS_data.tgz from:"
-      echo "https://drive.google.com/file/d/1TaswpWPnEd4TXst46jsa9XSMzLsbzjOQ/view?usp=sharing"
-      return 1
-    fi
-
-    tar -xvf IRIS_data.tgz || return 1
+    echo "Need to download IRIS_data/" >&2
   fi
 }
 
@@ -249,48 +152,20 @@ function install_iris_package() {
 
   cd "${SCRIPT_DIR}" || return 1
 
-  conda::activate_env "${CONDA_ENV_NAME_2}" || return 1
-
+  conda activate "${CONDA_ENV_PREFIX_2}" || return 1
   python setup.py install || return 1
-
-  cd "${SCRIPT_DIR}" || return 1
-
-  conda::deactivate_env || return 1
+  conda deactivate || return 1
 }
-
 
 function ensure_conda_envs() {
   echo
   echo "checking conda"
 
-  conda::create_env_with_name_and_python_version "${CONDA_ENV_NAME_2}"\
-                                                 "${CONDA_PYTHON_VERSION_2}" || return 1
-
-  conda::create_env_with_name_and_python_version "${CONDA_ENV_NAME_3}"\
-                                                 "${CONDA_PYTHON_VERSION_3}" || return 1
+  conda create --prefix "${CONDA_ENV_PREFIX_2}" || return 1
+  conda create --prefix "${CONDA_ENV_PREFIX_3}" || return 1
 }
 
 function install_optional() {
-  install_star
-  if [[ "$?" -ne 0 ]]; then
-    echo "Error installing optional dependency: star" >&2
-  fi
-  install_samtools
-  if [[ "$?" -ne 0 ]]; then
-    echo "Error installing optional dependency: samtools" >&2
-  fi
-  install_rmats
-  if [[ "$?" -ne 0 ]]; then
-    echo "Error installing optional dependency: rmats" >&2
-  fi
-  install_cufflinks
-  if [[ "$?" -ne 0 ]]; then
-    echo "Error installing optional dependency: cufflinks" >&2
-  fi
-  install_seq2hla
-  if [[ "$?" -ne 0 ]]; then
-    echo "Error installing optional dependency: seq2hla" >&2
-  fi
   install_ms_gf
   if [[ "$?" -ne 0 ]]; then
     echo "Error installing optional dependency: ms gf" >&2
@@ -301,17 +176,26 @@ function install() {
   local INSTALL_OPTIONAL="$1"
 
   ensure_conda_envs || return 1
-
+  install_python_packages "${INSTALL_OPTIONAL}" || return 1
   install_iedb || return 1
-  install_bedtools || return 1
 
   if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
     install_optional || return 1
   fi
 
-  install_python_packages || return 1
-  install_iris_data || return 1
   install_iris_package || return 1
+  check_iris_data || return 1
+
+  echo "conda_wrapper: '${SCRIPT_DIR}/conda_wrapper'" \
+       >> "${SCRIPT_DIR}/snakemake_config.yaml" || return 1
+  echo "conda_env_2: '${SCRIPT_DIR}/conda_env_2'" \
+       >> "${SCRIPT_DIR}/snakemake_config.yaml" || return 1
+  echo "conda_env_3: '${SCRIPT_DIR}/conda_env_3'" \
+       >> "${SCRIPT_DIR}/snakemake_config.yaml" || return 1
+  echo "iris_data: '${SCRIPT_DIR}/IRIS_data'" \
+       >> "${SCRIPT_DIR}/snakemake_config.yaml" || return 1
+  echo "iedb_path: '${SCRIPT_DIR}/IEDB/mhc_i/src'" \
+       >> "${SCRIPT_DIR}/snakemake_config.yaml" || return 1
 }
 
 function display_usage() {
@@ -341,10 +225,6 @@ function main() {
   fi
 
   source set_env_vars.sh || return 1
-  source conda.sh || return 1
-
-  SCRIPT_DIR="$(pwd)" || return 1
-
   install "${INSTALL_OPTIONAL}" || return 1
 }
 

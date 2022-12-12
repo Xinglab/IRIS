@@ -1,0 +1,111 @@
+# Resource allocation
+create_star_index_threads: 4
+create_star_index_mem_gb: 40
+create_star_index_time_hr: 12
+iris_append_sjc_mem_gb: 8
+iris_append_sjc_time_hr: 24
+# TODO 16 threads hardcoded in iris process_rnaseq
+iris_cuff_task_threads: 8
+iris_cuff_task_mem_gb: 8
+iris_cuff_task_time_hr: 12
+iris_epitope_post_mem_gb: 8
+iris_epitope_post_time_hr: 12
+iris_exp_matrix_mem_gb: 8
+iris_exp_matrix_time_hr: 12
+iris_extract_sjc_task_mem_gb: 8
+iris_extract_sjc_task_time_hr: 12
+iris_format_mem_gb: 8
+iris_format_time_hr: 12
+# TODO seq2HLA defaults to 6 threads since IRIS does not supply the -p argument
+iris_hla_task_threads: 6
+iris_hla_task_mem_gb: 8
+iris_hla_task_time_hr: 12
+iris_parse_hla_mem_gb: 8
+iris_parse_hla_time_hr: 12
+iris_predict_mem_gb: 8
+iris_predict_time_hr: 12
+iris_predict_task_mem_gb: 8
+iris_predict_task_time_hr: 12
+# TODO 8 hardcoded in makesubsh_rmats
+iris_rmats_task_threads: 8
+iris_rmats_task_mem_gb: 8
+iris_rmats_task_time_hr: 12
+# TODO 8 hardcoded in makesubsh_rmatspost
+iris_rmatspost_task_threads: 8
+iris_rmatspost_task_mem_gb: 8
+iris_rmatspost_task_time_hr: 12
+iris_screen_mem_gb: 8
+iris_screen_time_hr: 12
+iris_screen_sjc_mem_gb: 8
+iris_screen_sjc_time_hr: 12
+iris_sjc_matrix_mem_gb: 8
+iris_sjc_matrix_time_hr: 12
+# TODO 6 threads hardcoded in iris process_rnaseq
+iris_star_task_threads: 6
+iris_star_task_mem_gb: 40
+iris_star_task_time_hr: 12
+iris_visual_summary_mem_gb: 8
+iris_visual_summary_time_hr: 12
+# Command options
+run_core_modules: true
+# run_all_modules toggles which rules can be run by
+# conditionally adding UNSATISFIABLE_INPUT to certain rules.
+run_all_modules: false
+should_run_sjc_steps: true
+star_sjdb_overhang: 100
+run_name: 'NEPC_test'  # used to name output files
+splice_event_type: 'SE'  # one of [SE, RI,A3SS, A5SS]
+comparison_mode: 'group'  # group or individual
+stat_test_type: 'parametric'  # parametric or nonparametric
+use_ratio: false
+tissue_matched_normal_psi_p_value_cutoff: ''
+tissue_matched_normal_sjc_p_value_cutoff: ''
+tissue_matched_normal_delta_psi_p_value_cutoff: ''
+tissue_matched_normal_fold_change_cutoff: ''
+tissue_matched_normal_group_count_cutoff: ''
+tissue_matched_normal_reference_group_names: ''
+tumor_psi_p_value_cutoff: ''
+tumor_sjc_p_value_cutoff: ''
+tumor_delta_psi_p_value_cutoff: ''
+tumor_fold_change_cutoff: ''
+tumor_group_count_cutoff: ''
+tumor_reference_group_names: ''
+normal_psi_p_value_cutoff: '0.01'
+normal_sjc_p_value_cutoff: '0.000001'
+normal_delta_psi_p_value_cutoff: '0.05'
+normal_fold_change_cutoff: '1'
+normal_group_count_cutoff: '8'
+normal_reference_group_names: 'GTEx_Heart,GTEx_Blood,GTEx_Lung,GTEx_Liver,GTEx_Brain,GTEx_Nerve,GTEx_Muscle,GTEx_Spleen,GTEx_Thyroid,GTEx_Skin,GTEx_Kidney'
+# Input files
+# sample_fastqs are not needed when just running the core modules
+# sample_fastqs:
+#   sample_name_1:
+#     - '/path/to/sample_1_read_1.fq'
+#     - '/path/to/sample_1_read_2.fq'
+#   sample_name_2:
+#     - '/path/to/sample_2_read_1.fq'
+#     - '/path/to/sample_2_read_2.fq'
+blacklist: ''
+mapability_bigwig: '/path/to/IRIS_data/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig'
+mhc_list: '/path/to/example/hla_types_test.list'
+mhc_by_sample: '/path/to/example/hla_patient_test.tsv'
+gene_exp_matrix: ''
+splice_matrix_txt: '/path/to/example/splicing_matrix/splicing_matrix.SE.cov10.NEPC_example.txt'
+splice_matrix_idx: '/path/to/example/splicing_matrix/splicing_matrix.SE.cov10.NEPC_example.txt.idx'
+sjc_count_txt: '/path/to/example/sjc_matrix/SJ_count.NEPC_example.txt'
+sjc_count_idx: '/path/to/example/sjc_matrix/SJ_count.NEPC_example.txt.idx'
+# Reference files
+gtf_name: 'gencode.v26lift37.annotation.gtf'
+fasta_name: 'ucsc.hg19.fasta'
+reference_files:
+  gencode.v26lift37.annotation.gtf.gz:
+    url: 'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_26/GRCh37_mapping/gencode.v26lift37.annotation.gtf.gz'
+  ucsc.hg19.fasta.gz:
+    url: 'http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz'
+# Additional configuration
+# rmats_path: '/path/to/conda_env_2/bin/rmats.py'  # should be written by ./install
+# conda_wrapper: '/path/to/conda_wrapper'  # should be written by ./install
+# conda_env_2: '/path/to/conda_env_2'  # should be written by ./install
+# conda_env_3: '/path/to/conda_env_3'  # should be written by ./install
+# iris_data: '/path/to/IRIS_data  # should be written by ./install
+# iedb_path: '/path/to/IEDB/mhc_i/src'  # should be written by ./install

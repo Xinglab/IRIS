@@ -1,0 +1,5 @@
+beautifulsoup4=4.11.*
+google-api-python-client=2.*
+python=3.9.*
+snakemake=7.17.1
+tqdm=4.64.*

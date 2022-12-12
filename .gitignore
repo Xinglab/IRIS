@@ -12,3 +12,7 @@ IRIS.egg-info/
 build/
 dist/
 __pycache__/
+conda_env_2/
+conda_env_3/
+/.snakemake/
+/readline/
