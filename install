@@ -82,9 +82,6 @@ function install_python_packages() {
   if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
     conda install -c conda-forge -c bioconda --file conda_requirements_py2.txt \
           --file conda_requirements_py2_optional.txt || return 1
-    # r-base is an optional dependency which requires an old version of libreadline.
-    # The version of libreadline is not available on conda, but it can be installed manually.
-    install_readline || return 1
     # Find the rmats path needed to pass as --rMATS-path to IRIS
     RMATS_PATH="$(which rmats.py)"
     if [[ "$?" -ne 0 ]]; then
@@ -105,33 +102,6 @@ function install_python_packages() {
   conda activate "${CONDA_ENV_PREFIX_3}" || return 1
   conda install -c conda-forge -c bioconda --file conda_requirements_py3.txt || return 1
   conda deactivate || return 1
-}
-
-function install_readline() {
-  local ORIG_DIR="$(pwd)" || return 1
-  cd "${SCRIPT_DIR}" || return 1
-  mkdir -p readline || return 1
-  cd readline || return 1
-  local TAR_PATH='readline-6.3.tar.gz'
-  local TAR_URL='ftp://ftp.gnu.org/gnu/readline/readline-6.3.tar.gz'
-  if [[ ! -f "${TAR_PATH}" ]]; then
-    curl "${TAR_URL}" -o "${TAR_PATH}" || return 1
-  fi
-
-  if [[ ! -f 'readline-6.3/configure' ]]; then
-    tar -xvf "${TAR_PATH}" || return 1
-  fi
-
-  cd readline-6.3 || return 1
-  local SO_PATH='shlib/libreadline.so.6.3'
-  if [[ ! -f "${SO_PATH}" ]]; then
-    ./configure || return 1
-    make || return 1
-  fi
-
-  local DEST="${CONDA_ENV_PREFIX_2}/lib/libreadline.so.6"
-  cp "${SO_PATH}" "${DEST}" || return 1
-  cd "${ORIG_DIR}"
 }
 
 function check_iris_data() {
