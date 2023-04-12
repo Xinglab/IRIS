@@ -112,9 +112,6 @@ To install [optional dependencies](#other-dependencies-required-for-processing-r
   + Resolve with commands similar to
     - `cd conda_env_2/lib/python2.7/`
     - `cp _sysconfigdata_x86_64_conda_cos6_linux_gnu.py _sysconfigdata_x86_64_conda_linux_gnu.py`
-* The installed version of R may depend on old version of libreadline that is not available in conda
-  + Check for the error by activating `conda_env_2` and running `R`
-  + Resolve by activating `conda_env_2` and manually following the steps in the `install_readline()` function of [./install](./install)
 * IRIS uses `--label-string` to determine which fastq files are for read 1 and read 2
   + To avoid any issues name your fastq files so that they end with `1.fastq` and `2.fastq` to indicate which file represents which pair of the read
 
