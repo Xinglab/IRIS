@@ -339,7 +339,7 @@ def main(args):
 	    blacklist_events=loadBlacklistEvents(blacklist_path)
 	bw_map,calc_length=loadMappability(mappability_path)
 
-	all_orf=args.all_orf
+	all_orf=args.all_reading_frames
 	ignore_annotation=args.ignore_annotation
 	remove_early_stop=args.remove_early_stop
 	use_existing_test_result=args.use_existing_test_result

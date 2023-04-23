@@ -426,7 +426,7 @@ def main(args):
 	ref_genome=args.ref_genome
 	fin=args.as_input
 	splicing_event_type=args.splicing_event_type
-	all_orf=args.all_orf
+	all_orf=args.all_reading_frames
 	gtf=args.gtf
 	microexon_start, microexon_end=loadGTFMicroexonInfo(gtf)
 	ignore_annotation=args.ignore_annotation
