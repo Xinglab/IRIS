@@ -120,9 +120,10 @@ To install [optional dependencies](#other-dependencies-required-for-processing-r
 * For streamlined AS-derived target discovery, please follow [major functions](#streamlined-functions-of-major-modules) and run the corresponding toy example.
 * For customized pipeline development, please check [all functions](#individual-functions) of IRIS.
 
+
 This flowchart shows how the IRIS functions are organized
 
-![iris_diagram](docs/iris_diagram.png)
+![iris_diagram](docs/iris_workflow.png)
 
 ### Individual functions
 
@@ -203,11 +204,11 @@ For command line options of each sub-command, type: IRIS COMMAND -h
 
 ### Streamlined functions of major modules
 
-The common use of IRIS immunotherapy target discovery comprises four steps from three major modules. For a quick test, see [Example](#example) which uses the snakemake to run a small data set.
-* Step 1. Generate and index PSI-based AS matrix from rMATS output (RNA-seq data processing module)
-  + `IRIS format` option -d should be used to save the generated PSI-based AS matrix to the downloaded IRIS DB.
+The core of IRIS immunotherapy target discovery comprises of four steps from three major modules. For a quick test, see [Example](#example) which uses the snakemake to run a small data set.
+* **Step 1**. Generate and index PSI-based AS matrix from rMATS output (RNA-seq data processing module)
+  + `IRIS format` option `-d` should be used to save the generated PSI-based AS matrix to the downloaded IRIS DB.
   + Example files for `rmats_mat_path_manifest` and `rmats_sample_order` can be found under the 'example' folder for the test run.
-  + `IRIS index` will create an index for the IRIS format generated PSI-based AS matrix, and -o should be the path to the folder containing the AS matrix.
+  + `IRIS index` will create an index for the IRIS format generated PSI-based AS matrix, and `-o` should be the path to the folder containing the generated AS matrix.
 ```
 usage: IRIS format [-h] -t {SE,RI,A3SS,A5SS} -n DATA_NAME -s {1,2}
                    [-c COV_CUTOFF] [-i] [-e] [-d IRIS_DB_PATH] [--novelSS]
@@ -219,22 +220,30 @@ usage: IRIS index [-h] -t {SE,RI,A3SS,A5SS} -n DATA_NAME
                   splicing_matrix
 ```
 
-* Step 2. Screen (& translate) tumor-associated events (IRIS screening module: 'tumor-association screen' + optionally 'tumor-recurrence screen')
-  + [example/parameter_file_description.txt](example/parameter_file_description.txt) describes `PARAMETER_FIN` and [example/Test.para](example/Test.para) is an example.
-  +  Users can also use an optional secondary tumor-association screen by calling `IRIS screen_cpm`. This screening test accounts for the joint effects of overall gene expression and AS. Commands to run this test and the output result format are similar to tumor-specificity test in the 'Step 4' below.
-  +  Option -t runs `IRIS translate` to generate SJ peptides, a required step for IRIS module for target prediction
+* **Step 2**. Screen and translate tumor-associated events (IRIS screening module: 'tumor-association screen' + optional 'tumor-recurrence screen')
+  + Description of the `PARAMETER_FIN` input file can be found at [example/parameter_file_description.txt](example/parameter_file_description.txt), and an example file can be found at [example/NEPC_test.para](example/NEPC_test.para).
+  +  To perform an optional tumor-recurrence screen, include a 'tumor reference' in the `PARAMETER_FIN` input file.
+  +  Users can also use an optional secondary tumor-association screen (not included in Snakemake) by calling `IRIS screen_cpm`. This screening test accounts for the joint effects of overall gene expression and AS. Commands to run this test and the output result format are similar to tumor-specificity test in the 'Step 4' below.
+  +  Option `-t` in `IRIS screen` runs `IRIS translate` to generate SJ peptides, a required step for IRIS module for target prediction.
 ```
 usage: IRIS screen [-h] -p PARAMETER_FIN
                    --splicing-event-type {SE,RI,A3SS,A5SS} -o OUTDIR [-t]
                    [-g GTF] [--all-reading-frames] [--ignore-annotation]
                    [--remove-early-stop] [--min-sample-count MIN_SAMPLE_COUNT]
                    [--use-existing-test-result]
+                   
+usage: IRIS translate  [-h] -g REF_GENOME
+                       --splicing-event-type {SE,RI,A3SS,A5SS} --gtf GTF
+                       -o OUTDIR [--all-orf] [--ignore-annotation]
+                       [--remove-early-stop] [-c DELTAPSI_COLUMN] [-d DELTAPSI_CUT_OFF]
+                       [--no-tumor-form-selection] [--check-novel]
+                       as_input             
 ```
 
-* Step 3. Predict both extracellular targets and epitopes(__designed for cluster execution__) (IRIS target prediction module)
-  + `IRIS predict` can generate CAR-T annotation results and prepare a job array submission for TCR epitope prediction. TCR prediction preparation is optional and can be disabled by using --extraceullular-only.
+* **Step 3**. Predict both extracellular targets and epitopes(__designed for cluster execution__) (IRIS target prediction module)
+  + `IRIS predict` can generate CAR-T annotation results and prepare a job array submission for TCR epitope prediction. TCR prediction preparation is optional and can be disabled by using `--extraceullular-only`.
   + `IRIS epitope_post` will summarize TCR epitope prediction results after TCR epitope prediction jobs from IRIS predict are submitted and finished (job array submission step can be done manually or using snakemake)
-  + `MHC_LIST` and `MHC_BY_SAMPLE` can be generated by running `HLA_typing` (within or outside IRIS). Note that it is not necessary to restrict HLA types detected from input RNA samples. It is recommended for users to specify dummy files only containing HLA types of interest or common HLA types as long as HLA types in the dummy `hla_types.list` and `hla_patient.tsv` are consistent. Example files for `hla_types.list` and `hla_patient.tsv` can be found under [example/HLA_types/](example/HLA_types/).
+  + `MHC_LIST` and `MHC_BY_SAMPLE` can be generated by running `HLA_typing` (within or outside of IRIS). Note that it is not necessary to restrict HLA types detected from input RNA samples. It is recommended for users to specify dummy files only containing HLA types of interest or common HLA types as long as HLA types in the dummy `hla_types.list` and `hla_patient.tsv` are consistent. Example files for `hla_types.list` and `hla_patient.tsv` can be found at [example/hla_types_test.list](example/hla_types_test.list) and [example/hla_patient_test.tsv](example/hla_patient_test.tsv) respectively.
 ```
 usage: IRIS predict [-h] --task-dir TASK_DIR -p PARAMETER_FIN
                     -t {SE,RI,A3SS,A5SS} [--iedb-local IEDB_LOCAL]
@@ -253,8 +262,8 @@ usage: IRIS epitope_post [-h] -p PARAMETER_FIN -o OUTDIR
                          [--ic50-cut-off IC50_CUT_OFF]
 ```
 
-* Step 4. More strigent screen to compare the presence-absence of a given SJ between tumor and normal tissues (IRIS screening module: 'tumor-specificity screen')
-  + `IRIS append_sjc` combines `screen` and `screen_sjc` results (by appending `screen_sjc` outputs to `screen` outputs). The 'integrated' output contains annotations for tumor-specific targets.
+* **Step 4**. Perform tumor-specificity screen, a more strigent screen comparing the presence-absence of a given SJ between tumor and normal tissues (IRIS screening module: 'tumor-specificity screen')
+  + `IRIS append_sjc` combines `screen` and `screen_sjc` results (by appending `screen_sjc` outputs to `screen` outputs). This 'integrated' output contains annotations for tumor-specific targets.
   + `IRIS append_sjc -i` option can be used to execute both `IRIS append_sjc` and `IRIS annotate_ijc` functions. If `-i` option is used, `-p` and `-e` arguments are required.
 ```
 usage: IRIS screen_sjc [-h] -p PARAMETER_FIN
@@ -282,25 +291,24 @@ usage: IRIS annotate_ijc [-h] -p PARAMETER_FILE
 
 ### Snakemake
 
-The Snakemake workflow can be run with [./run](./run). First set the configuration values in [snakemake_config.yaml](snakemake_config.yaml)
+The Snakemake workflow can be run with [./run](./run). First set the configuration values in [snakemake_config.yaml](snakemake_config.yaml):
 * Set the resources to allocate for each job:
   + `{job_name}_{threads}`
   + `{job_name}_{mem_gb}`
   + `{job_name}_{time_hr}`
-* Set the reference files
-  + Provide the file names as `gtf_name:` and `fasta_name:`
-  + Either place the files in `./references/`
-  + Or provide a url under `reference_files:` to download the (potentially gzipped) files:
+* Set the reference files:
+  + Provide the file names for `gtf_name:` and `fasta_name:`
+  + Either place the files in `./references/` or provide a URL under `reference_files:` to download the (potentially gzipped) files:
 ```
 gtf_name: 'some_filename.gtf'
-fasta_name: other_filename.fasta'
+fasta_name: 'other_filename.fasta'
 reference_files:
   some_filename.gtf.gz:
     url: 'protocol://url/for/some_filename.gtf.gz'
   other_filename.fasta.gz:
     url: 'protocol://url/for/other_filename.fasta.gz'
 ```
-* Set the input files
+* Set the input files:
   + `sample_fastqs:` Set the read 1 and read 2 fastq files for each sample. For example:
 ```
 sample_fastqs:
@@ -311,35 +319,35 @@ sample_fastqs:
     - '/path/to/sample_2_read_1.fq'
     - '/path/to/sample_2_read_2.fq'
 ```
-  + `blocklist`: an optional block list of AS events similar to [IRIS/data/blacklist.brain_2020.txt](IRIS/data/blacklist.brain_2020.txt)
+  + `blacklist`: an optional black list of AS events similar to [IRIS/data/blacklist.brain_2020.txt](IRIS/data/blacklist.brain_2020.txt)
   + `mapability_bigwig`: an optional file for evaluating splice region mappability similar to `IRIS_data/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig`
-  + `mhc_list`: required if not starting with fastq files. similar to [example/HLA_types/hla_types.list](example/HLA_types/hla_types.list)
-  + `mhc_by_sample`: required if not starting with fastq files. similar to [example/HLA_types/hla_patient.tsv](example/HLA_types/hla_patient.tsv)
+  + `mhc_list`: required if not starting with fastq files, similar to [example/hla_types_test.list](example/hla_types_test.list)
+  + `mhc_by_sample`: required if not starting with fastq files, similar to [example/hla_patient_test.tsv](example/hla_patient_test.tsv)
   + `gene_exp_matrix`: optional tsv file with geneName as the first column and the expression for each sample in the remaining columns
   + `splice_matrix_txt`: optional output file from IRIS index that can be used as a starting point
   + `splice_matrix_idx`: the index file for `splice_matrix_txt`
-  + `sjc_count_txt`: optional output file from IRIS sjc_matrix that can be used as a starting point. Only relevant if `should_run_sjc_steps`
+  + `sjc_count_txt`: optional output file from `IRIS sjc_matrix` that can be used as a starting point. Only relevant if `should_run_sjc_steps`
   + `sjc_count_idx`: the index file for `sjc_count_txt`
 * Set other options
   + `run_core_modules`: set to `true` to start with existing `IRIS format` output and HLA lists
   + `run_all_modules`: set to `true` to start with fastq files
   + `should_run_sjc_steps`: set to `true` to enable splice junction based evaluation steps
-  + `star_sjdb_overhang`: used by STAR alignment. Ideally it should be `read_length -1`, but the STAR manual says that 100 should work well as a default
+  + `star_sjdb_overhang`: used by STAR alignment. Should ideally be `read_length -1`, but the STAR manual says that 100 works well as a default
   + `run_name`: used to name output files that will be written to `IRIS_data/`
-  + `splice_event_type`: one of `[SE, RI,A3SS, A5SS]`
-  + `comparison_mode`:one of `[group, individual]`
+  + `splice_event_type`: one of `[SE, RI, A3SS, A5SS]`
+  + `comparison_mode`: one of `[group, individual]`
   + `stat_test_type`: one of `[parametric, nonparametric]`
   + `use_ratio`: set to `true` to require a ratio of reference groups to pass the checks rather than a fixed count
-  + `tissue_matched_normal_..._{cutoff}`: set the cutoffs for the tissue matched normal reference group (tier 1)
-  + `tissue_matched_normal_reference_group_names`: a comma separate list of directory names under `IRIS_data/db`
-  + `tumor_..._{cutoff}`: set the cutoffs for the tumor reference group (tier 2)
-  + `tumor_reference_group_names`: a comma separate list of directory names under `IRIS_data/db`
-  + `normal_..._{cutoff}`: set the cutoffs for the normal reference group (tier 3)
-  + `normal_reference_group_names`: a comma separate list of directory names under `IRIS_data/db`
+  + `tissue_matched_normal_..._{cutoff}`: set cutoffs for the tissue matched normal reference group (tier 1)
+  + `tissue_matched_normal_reference_group_names`: a comma separated list of directory names under `IRIS_data/db`
+  + `tumor_..._{cutoff}`: set cutoffs for the tumor reference group (tier 2)
+  + `tumor_reference_group_names`: a comma separated list of directory names under `IRIS_data/db`
+  + `normal_..._{cutoff}`: set cutoffs for the normal reference group (tier 3)
+  + `normal_reference_group_names`: a comma separated list of directory names under `IRIS_data/db`
 
 ## Example
 
-The snakemake is configured to run the above [IRIS streamlined major functions](#streamlined-functions-of-major-modules) using [example/](example/). For customized pipeline development, we recommend that users refer to the [Snakefile](Snakefile) as a reference. [Snakefile](Snakefile) defines the steps of the pipeline. Update the `/path/to/` values with full paths in [snakemake_config.yaml](snakemake_config.yaml) and make any adjustments to [snakemake_profile/](snakemake_profile/). Then
+The snakemake is configured to run the above [IRIS streamlined major functions](#streamlined-functions-of-major-modules) using [example/](example/). For customized pipeline development, we recommend that users refer to the [Snakefile](Snakefile) as a reference. [Snakefile](Snakefile) defines the steps of the pipeline. To run the example, update the `/path/to/` values with full paths in [snakemake_config.yaml](snakemake_config.yaml), and make any adjustments to [snakemake_profile/](snakemake_profile/). Then
 ```
 ./run
 ```
@@ -392,19 +400,19 @@ __`[TASK/DATA_NAME].[AS_TYPE].tier2tier3.txt.ExtraCellularAS.txt`__: Tumor-assoc
 
 `[AS_TYPE].tier1/pred_filtered.score500.txt`: IEDB prediction outputs for SJ peptides from 'tier1' set with HLA-peptide binding IC50 values passing user-defined cut-off
 
-__`[AS_TYPE].tier1/epitope_summary.peptide-based.txt`__: AS-derived epitopes from 'tier1' set that are predicted to bind user-defined HLA type
+__`[AS_TYPE].tier1/epitope_summary.peptide-based.txt`__: AS-derived epitopes from 'tier1' set that are predicted to bind user-defined HLA types
 
-__`[AS_TYPE].tier1/epitope_summary.junction-based.txt`__: AS events from 'tier1' set that are predicted to bind user-defined HLA type
+__`[AS_TYPE].tier1/epitope_summary.junction-based.txt`__: AS events from 'tier1' set that are predicted to bind user-defined HLA types
 
 `[AS_TYPE].tier2tier3/pred_filtered.score500.txt`: IEDB prediction outputs for AS junction peptides from 'tier3' set with HLA-peptide binding IC50 value passing user-defined cut-off
 
-__`[AS_TYPE].tier2tier3/epitope_summary.peptide-based.txt`__: AS-derived epitopes from 'tier3' set that are predicted to bind user-defined HLA type
+__`[AS_TYPE].tier2tier3/epitope_summary.peptide-based.txt`__: AS-derived epitopes from 'tier3' set that are predicted to bind user-defined HLA types
 
-__`[AS_TYPE].tier2tier3/epitope_summary.junction-based.txt`__: AS events from 'tier3' set that are predicted to bind user-defined HLA type
+__`[AS_TYPE].tier2tier3/epitope_summary.junction-based.txt`__: AS events from 'tier3' set that are predicted to bind user-defined HLA types
 
 ### Tumor-specificity screen reports
 
-Screening or prediction outputs that integrated `screen` and `screen_sjc` results contain annotation for tumor-specific targets. These output files are indicated by `.integratedSJC.txt`, such as `[TASK/DATA_NAME].[AS_TYPE]tier2tier3.txt.integratedSJC.txt` and __`[AS_TYPE].tier2tier3/epitope_summary.peptide-based.txt.integratedSJC.txt`__, etc.
+Screening or prediction outputs that integrate `screen` and `screen_sjc` results contain annotations for tumor-specific targets. These output files are indicated by `.integratedSJC.txt`, such as `[TASK/DATA_NAME].[AS_TYPE]tier2tier3.txt.integratedSJC.txt` and __`[AS_TYPE].tier2tier3/epitope_summary.peptide-based.txt.integratedSJC.txt`__, etc.
 
 ## Contact
 
@@ -417,3 +425,6 @@ Yi Xing <yxing@ucla.edu>
 ## Publication
 
 Manuscript in submission
+
+
+
