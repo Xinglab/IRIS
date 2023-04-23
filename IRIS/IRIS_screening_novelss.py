@@ -374,7 +374,7 @@ def main(args):
 		gtf=args.gtf
 		exon_start_dict, exon_end_dict= loadGTF(gtf)
 
-	all_orf=args.all_orf 
+	all_orf=args.all_reading_frames 
 	ignore_annotation=args.ignore_annotation 
 	remove_early_stop=args.remove_early_stop 
 	use_existing_test_result=args.use_existing_test_result
