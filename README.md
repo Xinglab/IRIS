@@ -31,7 +31,7 @@
 * [samtools 1.3](https://sourceforge.net/projects/samtools/files/samtools/): required for IRIS RNA-seq processing
 * [rMATS-turbo](https://github.com/Xinglab/rmats-turbo): required for IRIS RNA-seq processing
 * [Cufflinks 2.2.1](http://cole-trapnell-lab.github.io/cufflinks/install/): required for IRIS RNA-seq processing
-* [seq2HLA](https://bitbucket.org/sebastian_boegel/seq2hla/src/default/): required for HLA typing; requires [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
+* [seq2HLA](https://github.com/TRON-Bioinformatics/seq2HLA): required for HLA typing (Note: The [original URL](ttps://bitbucket.org/sebastian_boegel/seq2hla/src/default/) of the tool is no longer working); requires [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
 * [MS GF+ (v2018.07.17)](https://github.com/MSGFPlus/msgfplus): required for MS search; requiring [Java](https://www.java.com/en/download/)
 * [R](https://www.r-project.org/): used by seq2HLA
 
@@ -129,71 +129,76 @@ This flowchart shows how the IRIS functions are organized
 
 IRIS provides individual functions/steps, allowing users to build pipelines for their customized needs. [IRIS_functions.md](IRIS_functions.md) describes each model/step, including RNA-seq preprocessing, HLA typing, proteo-transcriptomic MS searching, visualization, etc.
 ```
-IRIS -- IRIS
+usage: IRIS [-h] [--version]
 
 positional arguments:
-    format              Formats AS matrices from rMATS, followed by indexing
+  {format,screen,predict,epitope_post,process_rnaseq,makesubsh_mapping,makesubsh_rmats,makesubsh_rmatspost,exp_matrix,makesubsh_extract_sjc,extract_sjc,sjc_matrix,index,translate,pep2epitope,screen_plot,screen_sjc,append_sjc,annotate_ijc,screen_cpm,append_cpm,screen_novelss,screen_sjc_plot,makesubsh_hla,parse_hla,ms_makedb,ms_search,ms_parse,visual_summary}
+    format              Format AS matrices from rMATS, followed by indexing
                         for IRIS
-    screen              Screens AS-derived tumor antigens using big-data
-                        reference
-    predict             Predicts and annotates AS-derived TCR (pre-prediction)
+    screen              Identify AS events of varying degrees of tumor
+                        association and specificity using an AS reference
+                        panel
+    predict             Predict and annotate AS-derived TCR (pre-prediction)
                         and CAR-T targets
     epitope_post        Post-prediction step to summarize predicted TCR
                         targets
-    process_rnaseq      Processes RNA-Seq FASTQ files to quantify gene
+    process_rnaseq      Process RNA-Seq FASTQ files to quantify gene
                         expression and AS
-    makesubsh_mapping   Makes submission shell scripts for running
+    makesubsh_mapping   Make submission shell scripts for running
                         'process_rnaseq'
     makesubsh_rmats     Makes submission shell scripts for running rMATS-turbo
                         'prep' step
     makesubsh_rmatspost
-                        Makes submission shell scripts for running rMATS-turbo
+                        Make submission shell scripts for running rMATS-turbo
                         'post' step
-    exp_matrix          Makes a merged gene expression matrix from multiple
+    exp_matrix          Make a merged gene expression matrix from multiple
                         cufflinks results
     makesubsh_extract_sjc
-                        Makes submission shell scripts for running
+                        Make submission shell scripts for running
                         'extract_sjc'
-    extract_sjc         Extracts SJ counts from STAR-aligned BAM file and
+    extract_sjc         Extract SJ counts from STAR-aligned BAM file and
                         annotates SJs with number of uniquely mapped reads
                         that support the splice junction.
-    sjc_matrix          Makes SJ count matrix by merging SJ count files from a
+    sjc_matrix          Make SJ count matrix by merging SJ count files from a
                         specified list of samples. Performs indexing of the
-                        merged file.
-    index               Indexes AS matrices for IRIS
-    translate           Translates AS junctions into junction peptides
+                        merged file
+    index               Index AS matrices for IRIS
+    translate           Translate AS junctions into junction peptides
     pep2epitope         Wrapper to run IEDB for peptide-HLA binding prediction
-    screen_plot         Makes stacked/individual violin plots for list of AS
+    screen_plot         Make stacked/individual violin plots for list of AS
                         events
-    screen_sjc          Screens AS-derived tumor antigens by comparing number
-                        of samples expressing a splice junction using big-data
-                        reference of SJ counts
-    append_sjc          Appends SJC result as an annotation to PSI-based
-                        screening results and epitope prediction results in a
-                        specified screening output folder.
-    annotate_ijc        Annotates inclusion junction count info to PSI-based
+    screen_sjc          Identify AS events of varying degrees of tumor
+                        specificity by comparing the presense-absense of
+                        splice junctions using a reference of SJ counts
+    append_sjc          Append "screen_sjc" result as an annotation to PSI-
+                        based screening results and epitope prediction results
+                        in a specified screening output folder
+    annotate_ijc        Annotate inclusion junction count info to PSI-based
                         screening results or epitope prediction results in a
                         specified screening output folder. Can be called from
-                        append sjc to save time.
-    screen_cpm          Screens AS-derived tumor antigens by comparing splice
-                        junction CPM using big-data reference of SJ counts
-    append_cpm          Appends CPM result as an annotation to PSI-based
-                        screening results and epitope prediction results in a
-                        specified screening output folder.
-    screen_novelss      Screens AS-derived tumor antigens for unannotated
-                        events using big-data reference of SJ counts
-    screen_sjc_plot     Makes stacked/individual barplots of percentage of
+                        append_sjc to save time
+    screen_cpm          Identify AS events of varying degrees of tumor
+                        association and specificity using an AS reference
+                        panel based on normalized splice junction read counts
+    append_cpm          Append "screen_cpm" result as an annotation to PSI-
+                        based screening results and epitope prediction results
+                        in a specified screening output folder
+    screen_novelss      Identify AS events of varying degrees of tumor
+                        association and specificity, including events with
+                        unannotated splice junctions deteced by rMATS
+                        "novelss" option
+    screen_sjc_plot     Make stacked/individual barplots of percentage of
                         samples expressing a splice junction for list of AS
                         events
-    makesubsh_hla       Makes submission shell scripts for running seq2HLA for
+    makesubsh_hla       Make submission shell scripts for running seq2HLA for
                         HLA typing using RNA-Seq
-    parse_hla           Summarizes seq2HLA results of all input samples into
+    parse_hla           Summarize seq2HLA results of all input samples into
                         matrices for IRIS use
-    ms_makedb           Generates proteo-transcriptomic database for MS search
+    ms_makedb           Generate proteo-transcriptomic database for MS search
     ms_search           Wrapper to run MSGF+ for MS search
-    ms_parse            Parses MS search results to generate tables of
+    ms_parse            Parse MS search results to generate tables of
                         identified peptides
-    visual_summary      Makes a graphic summary of IRIS results
+    visual_summary      Make a graphic summary of IRIS results
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -209,6 +214,7 @@ The core of IRIS immunotherapy target discovery comprises of four steps from thr
   + `IRIS format` option `-d` should be used to save the generated PSI-based AS matrix to the downloaded IRIS DB.
   + Example files for `rmats_mat_path_manifest` and `rmats_sample_order` can be found under the 'example' folder for the test run.
   + `IRIS index` will create an index for the IRIS format generated PSI-based AS matrix, and `-o` should be the path to the folder containing the generated AS matrix.
+  + The option `novelSS` is experimental and not fully validated. It takes the output from the experimental function in rMATS to identify events with unannotated splice sites. Please refer to the latest rMATS (> v4.0.0) for details.
 ```
 usage: IRIS format [-h] -t {SE,RI,A3SS,A5SS} -n DATA_NAME -s {1,2}
                    [-c COV_CUTOFF] [-i] [-e] [-d IRIS_DB_PATH] [--novelSS]
@@ -223,7 +229,7 @@ usage: IRIS index [-h] -t {SE,RI,A3SS,A5SS} -n DATA_NAME
 * **Step 2**. Screen and translate tumor-associated events (IRIS screening module: 'tumor-association screen' + optional 'tumor-recurrence screen')
   + Description of the `PARAMETER_FIN` input file can be found at [example/parameter_file_description.txt](example/parameter_file_description.txt), and an example file can be found at [example/NEPC_test.para](example/NEPC_test.para).
   +  To perform an optional tumor-recurrence screen, include a 'tumor reference' in the `PARAMETER_FIN` input file.
-  +  Users can also use an optional secondary tumor-association screen (not included in Snakemake) by calling `IRIS screen_cpm`. This screening test accounts for the joint effects of overall gene expression and AS. Commands to run this test and the output result format are similar to tumor-specificity test in the 'Step 4' below.
+  +  Users can also use an optional secondary tumor-association screen (not included in Snakemake) by calling `IRIS screen_cpm`. This screening test accounts for the joint effects of overall gene expression and AS. Commands to run this test and the output result format are similar to tumor-specificity test in the __'Step 4'__ below.
   +  Option `-t` in `IRIS screen` runs `IRIS translate` to generate SJ peptides, a required step for IRIS module for target prediction.
 ```
 usage: IRIS screen [-h] -p PARAMETER_FIN
