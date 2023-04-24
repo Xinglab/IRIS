@@ -19,7 +19,7 @@
 ### Core dependencies (required for major IRIS functions/steps - format, screen, and predict)
 
 * python 2.7.x (numpy, scipy, seaborn, pyBigWig, statsmodels, pysam)
-* [IEDB stand-alone 20130222 2.15.5](http://tools.iedb.org/main/download/)
+* [IEDB stand-alone](http://tools.iedb.org/main/download/) (Note: IRIS is only tested on 20130222 [2.15.5](https://downloads.iedb.org/tools/mhci/2.15.5/)
   + IEDB additionally depends on:
     - [tcsh](http://www.tcsh.org)
     - [gawk](http://www.gnu.org/software/gawk/)
