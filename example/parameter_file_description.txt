@@ -21,23 +21,23 @@ Fields are separated by ' ': fitler1_cutoffs and filter1_reference_list
 within each field, parameters are separated by ',':
 - tier1_cutoffs: PSI_p-value_cutoff,deltaPSI_cutoff,FC_cutoff,SJC_p-value_cutoff,filter1_group_cutoff
 		# PSI_p-value_cutoff: Cutoff of p-value for statistical tests in PSI-based tests.
-		# deltaPSI_cutoff: Minimum difference of PSI values (i.e deltaPSI) between tumor and normal groups
-		# FC_cutoff: Fold Change cutoff of PSI value of input sample compared to normal control
-		# SJC_p-value_cutoff: Cutoff of p-value for statistical tests in SJC-based tests.
-		# tier1_group_cutoff: Minimum number of tumor/tissue reference groups satisfying above requirements. This number should be no larger than the number of reference normal groups selected in the next field ('tier1_reference list')
+		# deltaPSI_cutoff: Minimum difference of PSI values (i.e deltaPSI) between the tumor and normal tissue in a comparison.
+		# FC_cutoff: Fold-change cutoff of the PSI value between the tumor and normal tissue in a comparison.
+		# SJC_p-value_cutoff: Cutoff of p-value for statistical tests in splice junction read count (SJC)-based tests.
+		# tier1_group_cutoff: Minimum number of tissue-matched normal tissue types in the user-defined reference panel satisfying above requirements. This number should be no larger than the number of reference tissue-matched normal tissue types selected in the next field ('tier1_reference list')
 - tier1_reference_list: A list of selected reference panels (separated by ','). Names should be identical to the folder name in the IRIS db (see 'format' step)
 		
 Row4 (see below): Parameters for the tier 2 screening (i.e. 'tumor reference'). Same format as the row3
 
 Row5 (see below): Parameters for the tier 3 screening (i.e. 'normal tissue reference'). Same format as the row3
 
-Row3-5 (at least one NORMAL reference row is required) For example, tier 1 alone, or tier 3 alone, or tier 1 + tier 2 + tier 3 are valid settings for screening. Note that tier 2 alone will not function if tier 1 is missing (tumor recurrence is estabilshed by comparing to a user-specified tissue-matched normal reference in tier 1)
+Row3-5 : At least one normal tissue reference panel is required [i.e., tier 1 alone (row 3), or tier 3 alone (row5), or tier 1 + tier 2 + tier 3 (row3-5) are valid settings for screening]. Note that tier 2 alone will not work if tier 1 is missing (tumor recurrence is estabilshed by comparing to a user-specified tissue-matched normal tissue in tier 1)
 
 Row6 (required for PSI-based tests): Comparison mode & statistical test type: 'group' mode (number of input samples >=2) and 'individual mode' (number of input sample =1) are provided. 'group' mode is default and recommended; for PSI-based tests, 'parametric' and 'nonparametric' tests are supported. 'parametric' is default
 
 Row7 (required for PSI-based tests): Use ratio instead of number of groups for the tierX_group_cutoff. Default is False 
 
-Row8 (optional): Blacklist file. Removes the AS events that are error-prone due to artifacts. Optional
+Row8 (optional): Blocklist file. Removes the AS events that are error-prone due to artifacts. Optional
 
 Row9 (optional): Mappability annotation bigWig file. Required for evaluating splice region mappability.
 
