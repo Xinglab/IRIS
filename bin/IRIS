@@ -546,6 +546,7 @@ def add_ms_makedb_parser(subparsers):
 	required_args = arg_ms_makedb.add_argument_group('required arguments')
 	required_args.add_argument('--java-path', help='Path to Java')
 	required_args.add_argument('--MSGF-path', help='Path to MSGF+')
+        required_args.add_argument('--jvm-max-mem', help='Pass parameter for the maximum memory allocation pool for a Java Virtual Machine. Default is "Xmx8g"', required= True, default= 'Xmx8g')
 	required_args.add_argument('-o', '--outdir', help='Path to IRIS translation output directory', required=True)
 	required_args.add_argument('--uniprot-fasta',help='Specify the path of the UniProt proteome FASTA file', required= True)
 	required_args.add_argument('--exp-fin-list',help='Specify a file contains paths of gene expression files (by rows) that should be considered to form the proteogenomic db', required= True)
@@ -558,9 +559,11 @@ def add_ms_search_parser(subparsers):
 	required_args = arg_ms_search.add_argument_group('required arguments')
 	required_args.add_argument('--java-path', help='Path to Java')
 	required_args.add_argument('--MSGF-path', help='Path to MSGF+')
+        required_args.add_argument('--jvm-max-mem', help='Pass parameter for the maximum memory allocation pool for a Java Virtual Machine. Default is "Xmx8g"', required= True, default= 'Xmx8g')
 	required_args.add_argument('--MS-fin', help='Path of the MS input data. For supported formats. Details see MSGF+ manual', required=True)
 	required_args.add_argument('--MS-db',help='Path of the MS search db', required=True)
 	required_args.add_argument('-o', '--outdir', help='Specify a directory to output MS search result.', required=True)
+        optional_args.add_argument('--MSGF-search-para-fin', default='', help='File contains one line of parameters passing to MSGF+ for performing MS search. Providing an empty file will pass no parameters while providing no file will enalble the default parameters used for analyzing a specifc immunopeptidomics dataset. Default is "-e 0 -tda 1 -maxLength 13 -minLength 7 -inst 1 -t 5ppm"')
 	arg_ms_search._action_groups.append(optional_args)
 	return	
 

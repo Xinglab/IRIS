@@ -69,7 +69,9 @@ def main(args):
 	uniprot_fasta=args.uniprot_fasta
 	java_path = args.java_path
 	MSGF_path = args.MSGF_path
-	
+        jvm_max_mem = args.jvm_max_mem #Xmx8g
+        if jvm_max_mem!='':
+            jvm_max_mem='-'+jvm_max_mem
 	print '##Creating ProteoTransicritomic Ref'
 	makeProteoTranscriptomeRef(exp_fin_list, uniprot_fasta, outdir)
 
@@ -94,7 +96,7 @@ def main(args):
 	print cmd1
 	os.system(cmd1)
 
-	cmd2=java_path+' -Xmx8g -cp '+MSGF_path+' edu.ucsd.msjava.msdbsearch.BuildSA -d '+outdir+'/tmp/proteome_ref_combined.fa'
+	cmd2=java_path+' '+jvm_max_mem+' -cp '+MSGF_path+' edu.ucsd.msjava.msdbsearch.BuildSA -d '+outdir+'/tmp/proteome_ref_combined.fa'
 	print '##Indexing the proteotranscriptomic db'
 	print cmd2
 	os.system(cmd2)
