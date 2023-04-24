@@ -31,7 +31,7 @@
 * [samtools 1.3](https://sourceforge.net/projects/samtools/files/samtools/): required for IRIS RNA-seq processing
 * [rMATS-turbo](https://github.com/Xinglab/rmats-turbo): required for IRIS RNA-seq processing
 * [Cufflinks 2.2.1](http://cole-trapnell-lab.github.io/cufflinks/install/): required for IRIS RNA-seq processing
-* [seq2HLA](https://github.com/TRON-Bioinformatics/seq2HLA): required for HLA typing (Note: The [original URL](ttps://bitbucket.org/sebastian_boegel/seq2hla/src/default/) of the tool is no longer working); requires [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
+* [seq2HLA](https://github.com/TRON-Bioinformatics/seq2HLA): required for HLA typing (Note: The [original URL](https://bitbucket.org/sebastian_boegel/seq2hla/src/default/) of the tool is no longer working); requires [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
 * [MS GF+ (v2018.07.17)](https://github.com/MSGFPlus/msgfplus): required for MS search; requiring [Java](https://www.java.com/en/download/)
 * [R](https://www.r-project.org/): used by seq2HLA
 
