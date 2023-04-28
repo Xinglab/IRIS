@@ -325,7 +325,7 @@ sample_fastqs:
     - '/path/to/sample_2_read_1.fq'
     - '/path/to/sample_2_read_2.fq'
 ```
-  + `blacklist`: an optional black list of AS events similar to [IRIS/data/blacklist.brain_2020.txt](IRIS/data/blacklist.brain_2020.txt)
+  + `blocklist`: an optional blocklist of AS events similar to [IRIS/data/blocklist.brain_2020.txt](IRIS/data/blocklist.brain_2020.txt)
   + `mapability_bigwig`: an optional file for evaluating splice region mappability similar to `IRIS_data/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig`
   + `mhc_list`: required if not starting with fastq files, similar to [example/hla_types_test.list](example/hla_types_test.list)
   + `mhc_by_sample`: required if not starting with fastq files, similar to [example/hla_patient_test.tsv](example/hla_patient_test.tsv)

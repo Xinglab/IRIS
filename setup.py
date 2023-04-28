@@ -24,7 +24,7 @@ def main():
 		include_package_data=True,
 
 		package_data={'IRIS.data':[
-		'blacklist.brain_2020.txt',
+		'blocklist.brain_2020.txt',
 		'features.uniprot2gtf.ExtraCell.txt',
 		'UniprotENSGmap.txt',
 		'uniprot2gtf.blastout.uniprotAll.txt',

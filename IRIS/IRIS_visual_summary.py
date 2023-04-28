@@ -136,7 +136,7 @@ def read_parameters(parameter_f_name):
     parameters['normal_panel'] = panel_params[2]
     parameters['test_mode'] = lines[5]
     parameters['use_ratio'] = lines[6] == 'True'
-    parameters['blacklist'] = lines[7]
+    parameters['blocklist'] = lines[7]
     parameters['mappability_path'] = lines[8]
     parameters['ref_genome_path'] = lines[9]
 
