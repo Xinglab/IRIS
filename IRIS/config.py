@@ -40,7 +40,7 @@ def file_len(fin):
 
 
 # For screening and translation
-BRAIN_BLACKLIST_PATH = resource_filename('IRIS.data','blacklist.brain_2020.txt')
+BRAIN_BLOCKLIST_PATH = resource_filename('IRIS.data','blocklist.brain_2020.txt')
 ORF_MAP_PATH = resource_filename('IRIS.data','uniprot2gtf.blastout.uniprotAll.txt')
 
 ## For TCR mapping
