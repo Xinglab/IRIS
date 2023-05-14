@@ -326,17 +326,16 @@ def main(args):
 	para_fin=args.parameter_fin
 	splicing_event_type=args.splicing_event_type
 	fetching_data_col=8 if splicing_event_type == 'SE' else 10
-	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blacklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
+	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blocklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
 	panel_list=[out_prefix]
 	test_mode=test_mode.split(' ')
 	use_ratio=True if use_ratio=='True' else False
-	blacklist_events={}
+	blocklist_events={}
 	min_sample_count=args.min_sample_count
 	if min_sample_count:
 		min_sample_count=int(min_sample_count)
-        if blacklist_path!='':
-            #if blacklist_path=='BRAIN_BLACKLIST_PATH':
-	    blacklist_events=loadBlacklistEvents(blacklist_path)
+        if blocklist_path!='':
+	        blocklist_events=loadBlacklistEvents(blocklist_path)
 	bw_map,calc_length=loadMappability(mappability_path)
 
 	all_orf=args.all_reading_frames
@@ -440,7 +439,7 @@ def main(args):
 			if abs(max(cat_psi)-min(cat_psi))<0.05:#if change less than 5% skipped and no comparison available
 				fout_filtered.write('[Low Range]{}\t{}\t{}\n'.format(k,str(abs(max(cat_psi)-min(cat_psi))),str(has_count))) 
 				continue
-			if k in blacklist_events:
+			if k in blocklist_events:
 				fout_filtered.write('[Blacklisted]{}\t{}\t{}\n'.format(k,'-',str(has_count))) 
 				continue
 			if  has_count<=1:

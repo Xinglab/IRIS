@@ -360,13 +360,13 @@ def main(args):
 	splicing_event_type=args.splicing_event_type
 	event_list_fin=args.event_list_fin
 	fetching_sj_col=1
-	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blacklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
+	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blocklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
 	panel_list=[out_prefix]
 	test_mode=test_mode.split(' ')
 	use_ratio=True if use_ratio=='True' else False
-	blacklist_events={}
-        if blacklist_path!='':
-	    blacklist_events=loadBlacklistEvents(blacklist_path)
+	blocklist_events={}
+        if blocklist_path!='':
+	        blocklist_events=loadBlacklistEvents(blocklist_path)
 	bw_map,calc_length=loadMappability(mappability_path)
 	deltaPSI_cutoff=args.deltaPSI_cut_off
 	find_novel_ss=True if args.report_known_and_novelss_tumor_junction==False else False
