@@ -2,6 +2,5 @@ cufflinks=2.2.1
 pysam=0.15.4
 r-base=3.4.1
 rmats=4.1.2
-samtools=1.9
 seq2hla=2.2
 star=2.7.10b

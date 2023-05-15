@@ -98,6 +98,32 @@ function install_python_packages() {
 
   conda deactivate || return 1
 
+  if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
+    # samtools has dependency conflicts with the other packages in the
+    # Python 2 conda environment after:
+    # https://github.com/bioconda/bioconda-recipes/pull/40629
+    # A workaround is to install to a new conda environment and create a symlink.
+    conda activate "${CONDA_ENV_PREFIX_SAMTOOLS}" || return 1
+    conda install -c conda-forge -c bioconda samtools=1.9 || return 1
+    local SAMTOOLS_PATH="$(which samtools)" || return 1
+    conda deactivate || return 1
+    ln -s "${SAMTOOLS_PATH}" "${CONDA_ENV_PREFIX_2}/bin/samtools" || return 1
+
+    # Another option is to build from source
+    # conda activate "${CONDA_ENV_PREFIX_2}" || return 1
+    # mkdir samtools || return 1
+    # cd samtools || return 1
+    # local SAMTOOLS_URL='https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2'
+    # curl -L "${SAMTOOLS_URL}" -O || return 1
+    # tar -xvf samtools-1.9.tar.bz2 || return 1
+    # cd samtools-1.9 || return 1
+    # ./configure --without-curses || return 1
+    # make || return 1
+    # make prefix="${CONDA_ENV_PREFIX_2}" install || return 1
+    # cd "${SCRIPT_DIR}" || return 1
+    # conda deactivate || return 1
+  fi
+
   # Python 3
   conda activate "${CONDA_ENV_PREFIX_3}" || return 1
   conda install -c conda-forge -c bioconda --file conda_requirements_py3.txt || return 1
@@ -133,6 +159,7 @@ function ensure_conda_envs() {
 
   conda create --prefix "${CONDA_ENV_PREFIX_2}" || return 1
   conda create --prefix "${CONDA_ENV_PREFIX_3}" || return 1
+  conda create --prefix "${CONDA_ENV_PREFIX_SAMTOOLS}" || return 1
 }
 
 function install_optional() {

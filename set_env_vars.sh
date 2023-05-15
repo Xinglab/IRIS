@@ -13,6 +13,7 @@ function set_conda_env_prefixes() {
 
   CONDA_ENV_PREFIX_2="${SCRIPT_DIR}/conda_env_2"
   CONDA_ENV_PREFIX_3="${SCRIPT_DIR}/conda_env_3"
+  CONDA_ENV_PREFIX_SAMTOOLS="${SCRIPT_DIR}/conda_env_samtools"
 }
 
 function main() {
