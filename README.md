@@ -19,7 +19,7 @@
 ### Core dependencies (required for major IRIS functions/steps - format, screen, and predict)
 
 * python 2.7.x (numpy, scipy, seaborn, pyBigWig, statsmodels, pysam)
-* [IEDB stand-alone](http://tools.iedb.org/main/download/) (Note: IRIS is only tested on 20130222 [2.15.5](https://downloads.iedb.org/tools/mhci/2.15.5/)
+* [IEDB stand-alone](http://tools.iedb.org/main/download/) (Note: IRIS is only tested on 20130222 [2.15.5](https://downloads.iedb.org/tools/mhci/2.15.5/))
   + IEDB additionally depends on:
     - [tcsh](http://www.tcsh.org)
     - [gawk](http://www.gnu.org/software/gawk/)
@@ -426,11 +426,13 @@ Yang Pan <panyang@ucla.edu>
 
 Eric Kutschera <KUTSCHERAE@chop.edu>
 
+Beatrice Zhang <beazhang@sas.upenn.edu>
+
 Yi Xing <yxing@ucla.edu>
 
 ## Publication
 
-Manuscript in submission
+Pan Y*, Phillips JW*, Zhang BD*, Noguchi M*, Kutschera E, McLaughlin J, Nesterenko PA, Mao Z, Bangayan NJ, Wang R, Tran W, Yang HT, Wang Y, Xu Y, Obusan MB, Cheng D, Lee AH, Kadash-Edmondson KE, Champhekar A, Puig-Saus C, Ribas A, Prins RM, Seet CS, Crooks GM, Witte ON+, Xing Y+. (2023) IRIS: Big data-informed discovery of cancer immunotherapy targets arising from pre-mRNA alternative splicing. PNAS, in press. (+joint corresponding authors; *joint first authors)
 
 
 
