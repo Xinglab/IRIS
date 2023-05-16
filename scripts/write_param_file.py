@@ -61,14 +61,14 @@ def parse_args():
     parser.add_argument('--use-ratio',
                         action='store_true',
                         help='use ratio instead of count for group cutoffs')
-    parser.add_argument('--blacklist-file', help='list of AS events to remove')
+    parser.add_argument('--blocklist-file', help='list of AS events to remove')
     parser.add_argument('--mapability-bigwig',
                         help='allows evaluatio of splice region mapability')
     parser.add_argument('--reference-genome',
                         help='required for IRIS translate')
 
     args = parser.parse_args()
-    check_file_exists(args.blacklist_file, parser)
+    check_file_exists(args.blocklist_file, parser)
     check_file_exists(args.mapability_bigwig, parser)
     check_file_exists(args.reference_genome, parser)
 
@@ -217,7 +217,7 @@ def write_param_file(args):
         out_handle.write('{} {}\n'.format(args.comparison_mode,
                                           args.statistical_test_type))
         out_handle.write('{}\n'.format('True' if args.use_ratio else 'False'))
-        write_file_line_or_empty_line(out_handle, args.blacklist_file)
+        write_file_line_or_empty_line(out_handle, args.blocklist_file)
         write_file_line_or_empty_line(out_handle, args.mapability_bigwig)
         write_file_line_or_empty_line(out_handle, args.reference_genome)
 

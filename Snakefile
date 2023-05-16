@@ -217,10 +217,10 @@ rule unzip_reference_file:
         ' 2> {log.err}'
 
 
-def write_param_file_blacklist_param():
-    value = config.get('blacklist')
+def write_param_file_blocklist_param():
+    value = config.get('blocklist')
     if value:
-        return '--blacklist-file {}'.format(value)
+        return '--blocklist-file {}'.format(value)
 
     return ''
 
@@ -286,7 +286,7 @@ rule write_param_file:
         comparison_mode=config['comparison_mode'],
         stat_test_type=config['stat_test_type'],
         use_ratio='--use-ratio' if config.get('use_ratio') else '',
-        blacklist=write_param_file_blacklist_param(),
+        blocklist=write_param_file_blocklist_param(),
         bigwig=write_param_file_bigwig_param(),
         genome=write_param_file_genome_param(),
     resources:
@@ -313,7 +313,7 @@ rule write_param_file:
         ' --comparison-mode {params.comparison_mode}'
         ' --statistical-test-type {params.stat_test_type}'
         ' {params.use_ratio}'
-        ' {params.blacklist}'
+        ' {params.blocklist}'
         ' {params.bigwig}'
         ' {params.genome}'
         ' 1> {log.out}'

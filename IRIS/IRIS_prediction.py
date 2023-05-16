@@ -229,7 +229,7 @@ def main(args):
 	extracellular_only=args.extracellular_only
 	gene_exp_matrix=args.gene_exp_matrix
 	task_dir=args.task_dir
-	all_orf=args.all_orf
+        all_orf=args.all_reading_frames
 	pep_dir_prefix='prot'
 	if all_orf:
 		pep_dir_prefix='prot_allorf'

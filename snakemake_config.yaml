@@ -85,7 +85,7 @@ normal_reference_group_names: 'GTEx_Heart,GTEx_Blood,GTEx_Lung,GTEx_Liver,GTEx_B
 #   sample_name_2:
 #     - '/path/to/sample_2_read_1.fq'
 #     - '/path/to/sample_2_read_2.fq'
-blacklist: ''
+blocklist: ''
 mapability_bigwig: '/path/to/IRIS_data/resources/mappability/wgEncodeCrgMapabilityAlign24mer.bigWig'
 mhc_list: '/path/to/example/hla_types_test.list'
 mhc_by_sample: '/path/to/example/hla_patient_test.tsv'

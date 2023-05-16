@@ -82,9 +82,6 @@ function install_python_packages() {
   if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
     conda install -c conda-forge -c bioconda --file conda_requirements_py2.txt \
           --file conda_requirements_py2_optional.txt || return 1
-    # r-base is an optional dependency which requires an old version of libreadline.
-    # The version of libreadline is not available on conda, but it can be installed manually.
-    install_readline || return 1
     # Find the rmats path needed to pass as --rMATS-path to IRIS
     RMATS_PATH="$(which rmats.py)"
     if [[ "$?" -ne 0 ]]; then
@@ -101,37 +98,36 @@ function install_python_packages() {
 
   conda deactivate || return 1
 
+  if [[ "${INSTALL_OPTIONAL}" -ne 0 ]]; then
+    # samtools has dependency conflicts with the other packages in the
+    # Python 2 conda environment after:
+    # https://github.com/bioconda/bioconda-recipes/pull/40629
+    # A workaround is to install to a new conda environment and create a symlink.
+    conda activate "${CONDA_ENV_PREFIX_SAMTOOLS}" || return 1
+    conda install -c conda-forge -c bioconda samtools=1.9 || return 1
+    local SAMTOOLS_PATH="$(which samtools)" || return 1
+    conda deactivate || return 1
+    ln -s "${SAMTOOLS_PATH}" "${CONDA_ENV_PREFIX_2}/bin/samtools" || return 1
+
+    # Another option is to build from source
+    # conda activate "${CONDA_ENV_PREFIX_2}" || return 1
+    # mkdir samtools || return 1
+    # cd samtools || return 1
+    # local SAMTOOLS_URL='https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2'
+    # curl -L "${SAMTOOLS_URL}" -O || return 1
+    # tar -xvf samtools-1.9.tar.bz2 || return 1
+    # cd samtools-1.9 || return 1
+    # ./configure --without-curses || return 1
+    # make || return 1
+    # make prefix="${CONDA_ENV_PREFIX_2}" install || return 1
+    # cd "${SCRIPT_DIR}" || return 1
+    # conda deactivate || return 1
+  fi
+
   # Python 3
   conda activate "${CONDA_ENV_PREFIX_3}" || return 1
   conda install -c conda-forge -c bioconda --file conda_requirements_py3.txt || return 1
   conda deactivate || return 1
-}
-
-function install_readline() {
-  local ORIG_DIR="$(pwd)" || return 1
-  cd "${SCRIPT_DIR}" || return 1
-  mkdir -p readline || return 1
-  cd readline || return 1
-  local TAR_PATH='readline-6.3.tar.gz'
-  local TAR_URL='ftp://ftp.gnu.org/gnu/readline/readline-6.3.tar.gz'
-  if [[ ! -f "${TAR_PATH}" ]]; then
-    curl "${TAR_URL}" -o "${TAR_PATH}" || return 1
-  fi
-
-  if [[ ! -f 'readline-6.3/configure' ]]; then
-    tar -xvf "${TAR_PATH}" || return 1
-  fi
-
-  cd readline-6.3 || return 1
-  local SO_PATH='shlib/libreadline.so.6.3'
-  if [[ ! -f "${SO_PATH}" ]]; then
-    ./configure || return 1
-    make || return 1
-  fi
-
-  local DEST="${CONDA_ENV_PREFIX_2}/lib/libreadline.so.6"
-  cp "${SO_PATH}" "${DEST}" || return 1
-  cd "${ORIG_DIR}"
 }
 
 function check_iris_data() {
@@ -163,6 +159,7 @@ function ensure_conda_envs() {
 
   conda create --prefix "${CONDA_ENV_PREFIX_2}" || return 1
   conda create --prefix "${CONDA_ENV_PREFIX_3}" || return 1
+  conda create --prefix "${CONDA_ENV_PREFIX_SAMTOOLS}" || return 1
 }
 
 function install_optional() {

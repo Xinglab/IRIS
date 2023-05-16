@@ -107,7 +107,7 @@ def main(args):
 	fin_plot_query=args.event_list#for plot
 	step=int(args.step)#for plot
 	has_header=args.header#for plot
-	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blacklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
+	out_prefix,db_dir,filter1_para,filter2_para,filter3_para,test_mode,use_ratio,blocklist_path,mappability_path,ref_genome=[l.strip() for l in open(para_fin)]
 	panel_list=[out_prefix]
 	test_mode=test_mode.split(' ')
 	filter1_cutoff_pval, filter1_cutoff_dpsi, filter1_cutoff_foc, filter1_group_cutoff, filter1, panel_list =loadParametersRow(filter1_para, panel_list)
