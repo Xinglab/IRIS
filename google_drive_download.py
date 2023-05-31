@@ -126,7 +126,7 @@ def download_all_files(iris_folder_id, dest_dir, drive_service):
 
     temp_name = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False) as temp_handle:
+        with tempfile.NamedTemporaryFile(mode='wt', delete=False) as temp_handle:
             temp_name = temp_handle.name
 
             write_file_tsv(all_files, TOP_DIR_NAME, temp_handle)
