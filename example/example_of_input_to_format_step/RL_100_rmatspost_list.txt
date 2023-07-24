@@ -1,0 +1,1 @@
+BAMs/RL_100/1325.aln/Aligned.sortedByCoord.out.bam,BAMs/RL_100/2158.aln/Aligned.sortedByCoord.out.bam,BAMs/RL_100/2675.aln/Aligned.sortedByCoord.out.bam,BAMs/RL_100/2870.aln/Aligned.sortedByCoord.out.bam,BAMs/RL_100/2867.aln/Aligned.sortedByCoord.out.bam,BAMs/RL_100/803.aln/Aligned.sortedByCoord.out.bam

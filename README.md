@@ -212,7 +212,7 @@ For command line options of each sub-command, type: IRIS COMMAND -h
 The core of IRIS immunotherapy target discovery comprises of four steps from three major modules. For a quick test, see [Example](#example) which uses the snakemake to run a small data set.
 * **Step 1**. Generate and index PSI-based AS matrix from rMATS output (RNA-seq data processing module)
   + `IRIS format` option `-d` should be used to save the generated PSI-based AS matrix to the downloaded IRIS DB.
-  + Example files for `rmats_mat_path_manifest` and `rmats_sample_order` can be found under the 'example' folder for the test run.
+  + Example files for `rmats_mat_path_manifest` and `rmats_sample_order` can be found under [example/example_of_input_to_format_step/](example/example_of_input_to_format_step/).
   + `IRIS index` will create an index for the IRIS format generated PSI-based AS matrix, and `-o` should be the path to the folder containing the generated AS matrix.
   + The option `novelSS` is experimental and not fully validated. It takes the output from the experimental function in rMATS to identify events with unannotated splice sites. Please refer to the latest rMATS (> v4.0.0) for details.
 ```
