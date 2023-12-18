@@ -23,18 +23,21 @@ def write_task_script(out_prefix, fin, label_string, task_dir):
 	task_script = os.path.join(task_dir, task_script_base)
 	fout=open(task_script,'w')
 	suffix=r1[0].split(label_string)[1]
-	path='/'.join(r1[0].split('/')[:-1])
 	fq_path1=' '.join(sorted(r1))
-	cmd_fq1='cat '+fq_path1+' > '+path+'/fq1.'+suffix
+	temp_dir = tempfile.mkdtemp(dir=fq_dir)
+	temp_dir = os.path.abspath(temp_dir)
+	temp_fq1 = os.path.join(temp_dir, 'fq1.{}'.format(suffix))
+	temp_fq2 = os.path.join(temp_dir, 'fq2.{}'.format(suffix))
+	cmd_fq1='cat '+fq_path1+' > ' + temp_fq1
 	fout.write('#!/bin/bash\n'+cmd_fq1+'\n')
 
 	fq_path2=' '.join(sorted(r2))
-	cmd_fq2='cat '+fq_path2+' > '+path+'/fq2.'+suffix
+	cmd_fq2='cat '+fq_path2+' > ' + temp_fq2
 	fout.write(cmd_fq2+'\n')
 
-	cmd1='seq2HLA -1 '+path+'/fq1.'+suffix+' -2 '+path+'/fq2.'+suffix+' -r '+out_dir+'/'+sample_name+' > '+out_dir+'/seq2hla.log 2>&1'
+	cmd1='seq2HLA -1 ' + temp_fq1 + ' -2 ' + temp_fq2 + ' -r '+out_dir+'/'+sample_name+' > '+out_dir+'/seq2hla.log 2>&1'
 	fout.write(cmd1+'\n')
-	fout.write('rm '+path+'/fq1.'+suffix+'\nrm '+path+'/fq2.'+suffix+'\n')
+	fout.write('rm -r' + temp_dir + '\n')
 	fout.close()
 
 
