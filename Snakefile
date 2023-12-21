@@ -574,8 +574,9 @@ rule iris_makesubsh_mapping:
 
 def iris_star_task_input(wildcards):
     inputs = dict()
-    inputs['star_task'] = os.path.join(result_dir(), 'mapping_tasks',
-                                       'STARmap.{sample}.sh')
+    inputs['star_task'] = os.path.join(
+        result_dir(), 'mapping_tasks',
+        'STARmap.{}.sh'.format(wildcards.sample))
     if not config['run_all_modules']:
         inputs['run_all_modules'] = UNSATISFIABLE_INPUT
 
@@ -611,11 +612,13 @@ rule iris_star_task:
 
 def iris_cuff_task_input(wildcards):
     inputs = dict()
-    inputs['cuff_task'] = os.path.join(result_dir(), 'mapping_tasks',
-                                       'Cuffquant.{sample}.sh')
-    inputs['star_task_done'] = os.path.join(result_dir(), 'process_rnaseq',
-                                            '{sample}.aln',
-                                            'Aligned.sortedByCoord.out.bam')
+    inputs['cuff_task'] = os.path.join(
+        result_dir(), 'mapping_tasks',
+        'Cuffquant.{}.sh'.format(wildcards.sample))
+    inputs['star_task_done'] = os.path.join(
+        result_dir(), 'process_rnaseq',
+        '{}.aln'.format(wildcards.sample),
+        'Aligned.sortedByCoord.out.bam')
     if not config['run_all_modules']:
         inputs['run_all_modules'] = UNSATISFIABLE_INPUT
 
@@ -722,8 +725,9 @@ rule iris_makesubsh_hla:
 
 def iris_hla_task_input(wildcards):
     inputs = dict()
-    inputs['hla_task'] = os.path.join(result_dir(), 'hla_tasks',
-                                      'seq2hla.{sample}.sh')
+    inputs['hla_task'] = os.path.join(
+        result_dir(), 'hla_tasks',
+        'seq2hla.{}.sh'.format(wildcards.sample))
     if not config['run_all_modules']:
         inputs['run_all_modules'] = UNSATISFIABLE_INPUT
 
@@ -855,8 +859,9 @@ rule iris_makesubsh_rmats:
 
 def iris_rmats_task_input(wildcards):
     inputs = dict()
-    inputs['rmats_task'] = os.path.join(result_dir(), 'rmats_tasks',
-                                        'rMATS_prep.{sample}.sh')
+    inputs['rmats_task'] = os.path.join(
+        result_dir(), 'rmats_tasks',
+        'rMATS_prep.{}.sh'.format(wildcards.sample))
     if not config['run_all_modules']:
         inputs['run_all_modules'] = UNSATISFIABLE_INPUT
 
@@ -1180,8 +1185,9 @@ def iris_makesubsh_extract_sjc_task_dir_param(wildcards, output):
 
 def iris_makesubsh_extract_sjc_input(wildcards):
     inputs = dict()
-    inputs['bam'] = os.path.join(result_dir(), 'process_rnaseq', '{sample}.aln',
-                                 'Aligned.sortedByCoord.out.bam')
+    inputs['bam'] = os.path.join(
+        result_dir(), 'process_rnaseq', '{}.aln'.format(wildcards.sample),
+        'Aligned.sortedByCoord.out.bam')
     inputs['gtf'] = os.path.join('references', config['gtf_name'])
     inputs['fasta'] = os.path.join('references', config['fasta_name'])
     if not config['run_all_modules']:
@@ -1227,8 +1233,9 @@ rule iris_makesubsh_extract_sjc:
 
 def iris_extract_sjc_task_input(wildcards):
     inputs = dict()
-    inputs['extract_task'] = os.path.join(result_dir(), 'extract_sjc_tasks',
-                                          'cmdlist.extract_sjc.{sample}')
+    inputs['extract_task'] = os.path.join(
+        result_dir(), 'extract_sjc_tasks',
+        'cmdlist.extract_sjc.{}'.format(wildcards.sample))
     if not config['run_all_modules']:
         inputs['run_all_modules'] = UNSATISFIABLE_INPUT
 
