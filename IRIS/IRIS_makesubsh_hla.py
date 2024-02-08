@@ -1,4 +1,5 @@
 import sys,glob,os
+import tempfile
 from . import config
 
 
@@ -37,7 +38,7 @@ def write_task_script(out_prefix, fin, label_string, task_dir):
 
 	cmd1='seq2HLA -1 ' + temp_fq1 + ' -2 ' + temp_fq2 + ' -r '+out_dir+'/'+sample_name+' > '+out_dir+'/seq2hla.log 2>&1'
 	fout.write(cmd1+'\n')
-	fout.write('rm -r' + temp_dir + '\n')
+	fout.write('rm -r ' + temp_dir + '\n')
 	fout.close()
 
 
