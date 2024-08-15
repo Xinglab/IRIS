@@ -50,19 +50,7 @@ __IRIS is designed to make use of a computing cluster to improve performance. Fo
 
 #### 1.2 Download IRIS db
 
-IRIS loads a big-data reference database of splicing events and other genomic annotations. These data are included in [IRIS_data.v2.0.0](https://drive.google.com/drive/folders/1zhmXoajD5RyjxVTYbGZ-ebic1VPfEYKz?usp=sharing) (a Google Drive link; size of entire folder is ~400 GB; users can select reference groups to download). The files need to be placed under `./IRIS_data/`
-
-The files can be automatically downloaded with [google_drive_download.py](google_drive_download.py). Downloading a large amount of data with the API requires authentication:
-* https://cloud.google.com/docs/authentication/production
-* https://cloud.google.com/bigquery/docs/authentication/service-account-file
-
-To use the script, first create a service account:
-* Go to google cloud console -> IAM & Admin -> Service Accounts -> create service account
-* Give the new account: role=owner
-* Click the new service account email on the service account page
-* Download a .json key by clicking: keys -> add key -> create new key -> json
-
-That .json key is passed to [google_drive_download.py](google_drive_download.py)
+IRIS loads a big-data reference database of splicing events and other genomic annotations. These data are included in [IRIS_data.v2.0.0](https://xinglabtrackhub.research.chop.edu/iris/IRIS_data.v2.0.0/) (size of entire folder is ~400 GB; users can select reference groups to download). The files need to be placed under `./IRIS_data/`
 
 #### 1.3 Download IEDB MHC I prediction tools
 
