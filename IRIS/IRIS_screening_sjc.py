@@ -92,12 +92,21 @@ def summarizeSJ2ASevent(event_list_fin, splicing_event_type, sig_junction, outdi
 			else:
 				as_event_result.append(True)
 				as_event_result_list.append(k)
-		if as_event_result[0]==as_event_result[1]==as_event_result[2]==True:
+
+		if splicing_event_type == 'SE':
+			all_true = as_event_result[0]==as_event_result[1]==as_event_result[2]==True
+			all_false = as_event_result[0]==as_event_result[1]==as_event_result[2]==False
+			only_alt = as_event_result[0]==as_event_result[1]!=as_event_result[2]
+		else:
+			all_true = as_event_result[0]==as_event_result[1]==True
+			all_false = as_event_result[0]==as_event_result[1]==False
+			only_alt = False
+		if all_true:
 			fout_summary.write(as_event+'\tAll junctions\t'+';'.join(as_event_result_list)+'\n')
-		elif as_event_result[0]==as_event_result[1]==as_event_result[2]==False:
+		elif all_false:
 			continue
 		else:
-			if as_event_result[0]==as_event_result[1]!=as_event_result[2]:
+			if only_alt:
 				fout_summary.write(as_event+'\tOnly alternative junctions\t'+';'.join(as_event_result_list)+'\n')
 			else:
 				fout_summary.write(as_event+'\tOther combination\t'+';'.join(as_event_result_list)+'\n')
